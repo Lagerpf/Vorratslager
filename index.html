@@ -113,34 +113,55 @@ input,select{width:100%;border:1px solid var(--line);background:var(--surface);c
       <select id="zf"></select>
     </div>
     <div id="stocklist" style="display:flex;flex-direction:column;gap:22px;margin-top:16px"></div>
-    <div style="margin-top:28px;display:flex;flex-direction:column;gap:6px">
-      <h2>Lagerbereiche</h2>
-      <div id="zonelist"></div>
-      <form id="zoneadd" style="display:flex;gap:8px;margin-top:8px">
-        <input id="zonename" placeholder="Neuer Bereich, z. B. Kellerregal">
-        <button class="btn" type="submit">Anlegen</button>
-      </form>
-    </div>
     <div style="margin-top:28px;display:flex;flex-direction:column;gap:8px">
-      <h2>Haushalt</h2>
-      <p class="hint" style="margin:0" id="hhinfo"></p>
-      <div class="field"><span class="label">Einladungslink für Mitbewohner</span>
-        <input id="invite" readonly style="font-family:var(--mono);font-size:.8rem"></div>
-      <div class="toolbar">
-        <button class="btn primary" id="sharebtn" type="button">Link teilen</button>
-        <button class="btn" id="copybtn" type="button">Link kopieren</button>
-      </div>
       <div class="field"><span class="label">Dein Name (wird bei deinen Einträgen angezeigt)</span><input id="myname" placeholder="z. B. Jonas"></div>
-      <button class="btn danger" id="leavebtn" type="button">Haushalt auf diesem Gerät verlassen</button>
+      <button class="btn ghost danger small" id="leavebtn" type="button" style="align-self:flex-start">Haushalt auf diesem Gerät verlassen</button>
       <div id="leaveconfirm" hidden class="msg err">Wirklich verlassen? Die Daten bleiben für die anderen erhalten. Zum Zurückkommen brauchst du den Einladungslink.
         <div class="toolbar" style="margin-top:8px"><button class="btn danger" id="leaveyes" type="button">Ja, verlassen</button><button class="btn" id="leaveno" type="button">Abbrechen</button></div></div>
+      <button class="btn" data-tab="admin" type="button" style="margin-top:12px">Admin</button>
     </div>
-    <div style="margin-top:28px;display:flex;flex-direction:column;gap:8px">
-      <h2>Sicherung</h2>
-      <p class="hint" style="margin:0">Alles wird automatisch für den ganzen Haushalt gespeichert. Die Sicherungsdatei ist nur ein zusätzlicher Notfall-Export.</p>
-      <div class="toolbar">
-        <button class="btn" id="exportbtn" type="button">Sicherung speichern</button>
-        <label class="btn filebtn">Sicherung laden<input id="importfile" type="file" accept="application/json,.json"></label>
+  </section>
+
+  <section id="p-admin" hidden>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <button class="btn small" data-tab="stock" type="button">← Zurück</button><h2>Admin</h2>
+    </div>
+    <div id="admin-lock" class="setup"></div>
+    <div id="admin-panel" hidden style="display:flex;flex-direction:column;gap:28px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <h2>Haushalt</h2>
+        <div class="field"><span class="label">Name des Haushalts</span><input id="hhname"></div>
+        <div class="field"><span class="label">Einladungslink für Mitbewohner</span>
+          <input id="invite" readonly style="font-family:var(--mono);font-size:.8rem"></div>
+        <div class="toolbar">
+          <button class="btn primary" id="sharebtn" type="button">Link teilen</button>
+          <button class="btn" id="copybtn" type="button">Link kopieren</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <h2>Lagerbereiche</h2>
+        <div id="zonelist"></div>
+        <form id="zoneadd" style="display:flex;gap:8px;margin-top:8px">
+          <input id="zonename" placeholder="Neuer Bereich, z. B. Kellerregal">
+          <button class="btn" type="submit">Anlegen</button>
+        </form>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <h2>Sicherung</h2>
+        <p class="hint" style="margin:0">Alles wird automatisch für den ganzen Haushalt gespeichert. Die Sicherungsdatei ist ein zusätzlicher Notfall-Export.</p>
+        <div class="toolbar">
+          <button class="btn" id="exportbtn" type="button">Sicherung speichern</button>
+          <label class="btn filebtn">Sicherung laden<input id="importfile" type="file" accept="application/json,.json"></label>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <h2>Admin-Code</h2>
+        <form id="codechange" style="display:flex;gap:8px">
+          <input id="newcode" placeholder="Neuer Code (mind. 3 Zeichen)" autocomplete="off">
+          <button class="btn" type="submit">Ändern</button>
+        </form>
+        <div id="admin-msg" hidden></div>
+        <button class="btn ghost small" id="adminlogout" type="button" style="align-self:flex-start">Admin auf diesem Gerät abmelden</button>
       </div>
     </div>
   </section>
@@ -204,7 +225,7 @@ input,select{width:100%;border:1px solid var(--line);background:var(--surface);c
 <script src="ean.js"></script>
 <script>
 const WARN_DAYS = 7, CRIT_DAYS = 2, KEY = "vorratslager-v2";
-const S = { zones:[], items:[], products:{}, tab:"warn", hid:null, hhName:"", ready:false };
+const S = { zones:[], items:[], products:{}, tab:"warn", hid:null, hhName:"", ready:false, isAdmin:false, adminSet:false };
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36);
@@ -212,6 +233,8 @@ const lsGet = k => { try{ return localStorage.getItem(KEY+"-"+k); }catch(_){ ret
 const lsSet = (k,v) => { try{ v==null ? localStorage.removeItem(KEY+"-"+k) : localStorage.setItem(KEY+"-"+k,v); }catch(_){} };
 function newHouseholdId(){ const a="abcdefghijkmnpqrstuvwxyz23456789"; const r=new Uint8Array(24); crypto.getRandomValues(r); return Array.from(r,x=>a[x%a.length]).join(""); }
 const myName = () => lsGet("name") || "";
+const myUid = () => firebase.auth().currentUser.uid;
+const secretRef = () => col("secret").doc("admin");
 
 /* ---------- Firebase ---------- */
 let fs=null, unsubs=[];
@@ -241,7 +264,8 @@ function subscribe(){
   sync("zones",a=>S.zones=a);
   sync("items",a=>{ S.items=a; a.filter(i=>(i.qty||0)<=0).forEach(i=>col("items").doc(i.id).delete().catch(()=>{})); S.items=a.filter(i=>(i.qty||0)>0); });
   sync("products",a=>{ S.products={}; a.forEach(({id,...r})=>S.products[id]=r); });
-  unsubs.push(fs.collection("households").doc(S.hid).onSnapshot(d=>{ S.hhName=(d.data()||{}).name||""; render(); },()=>{}));
+  unsubs.push(fs.collection("households").doc(S.hid).onSnapshot(d=>{ const x=d.data()||{}; S.hhName=x.name||""; S.adminSet=!!x.adminSet; render(); },()=>{}));
+  unsubs.push(col("admins").doc(myUid()).onSnapshot(d=>{ S.isAdmin=d.exists; render(); },()=>{ S.isAdmin=false; render(); }));
 }
 function setSync(t,err){ const el=$("syncline"); el.hidden=!t; el.textContent=t||""; el.style.color=err?"var(--bad)":""; }
 const write = p => p.catch(e=>setSync("Speichern fehlgeschlagen: "+(e.code==="permission-denied"?"keine Berechtigung.":"bitte nochmal versuchen."),true));
@@ -268,7 +292,7 @@ const inviteLink = () => location.origin + location.pathname + "?h=" + S.hid;
 /* ---------- setup screens ---------- */
 function renderSetup(kind,detail){
   const p=$("p-setup"); p.hidden=false;
-  for(const t of ["warn","stock","in","out"]) $("p-"+t).hidden=true;
+  for(const t of ["warn","stock","in","out","admin"]) $("p-"+t).hidden=true;
   document.querySelector(".tabs").hidden=true;
   if(kind==="config"){ p.innerHTML=`<div class="setup"><div class="card"><h2>Einrichtung fehlt noch</h2>
     <p style="margin:0">In der Datei <b>config.js</b> fehlen die Zugangsdaten deines Firebase-Projekts. Schritt 1 bis 3 der Anleitung erklären, wo du sie findest.</p></div></div>`; return; }
@@ -279,6 +303,8 @@ function renderSetup(kind,detail){
     <div class="card"><h2>Neuen Haushalt anlegen</h2>
       <p class="hint" style="margin:0">Für die erste Person. Danach schickst du den Einladungslink an deine Mitbewohner.</p>
       <input id="setup-hh" placeholder="Name, z. B. WG Sanderstraße">
+      <input id="setup-code" placeholder="Admin-Code festlegen (mind. 3 Zeichen)" autocomplete="off">
+      <p class="hint" style="margin:0">Mit dem Admin-Code verwaltest du Lagerbereiche, Einladungslink und Sicherung, auch von einem zweiten Gerät aus.</p>
       <button class="btn primary" id="setup-create" type="button">Haushalt anlegen</button></div>
     <div class="card"><h2>Haushalt beitreten</h2>
       <p class="hint" style="margin:0">Öffne einfach den Einladungslink, den du bekommen hast. Oder füge ihn hier ein.</p>
@@ -295,10 +321,16 @@ document.addEventListener("click",async e=>{
   const t=e.target.closest("button"); if(!t) return;
   if(t.id==="setup-create"){
     const n=$("setup-name").value.trim(); if(n) lsSet("name",n);
+    const code=$("setup-code").value.trim();
+    if(code.length<3) return showMsg($("setup-msg"),"Bitte einen Admin-Code mit mindestens 3 Zeichen festlegen.",true);
     const hid=newHouseholdId(); S.hid=hid; t.disabled=true;
     try{
-      await fs.collection("households").doc(hid).set({name:$("setup-hh").value.trim()||"Unser Haushalt",created:firebase.firestore.FieldValue.serverTimestamp()});
-      const b=fs.batch(); [1,2,3,4].forEach(k=>b.set(col("zones").doc("z"+k),{name:"Bereich "+k,order:k})); await b.commit();
+      const b=fs.batch();
+      b.set(secretRef(),{code});
+      b.set(col("admins").doc(myUid()),{code});
+      b.set(fs.collection("households").doc(hid),{name:$("setup-hh").value.trim()||"Unser Haushalt",adminSet:true,created:firebase.firestore.FieldValue.serverTimestamp()});
+      [1,2,3,4].forEach(k=>b.set(col("zones").doc("z"+k),{name:"Bereich "+k,order:k}));
+      await b.commit();
       enterHousehold(hid); S.tab="stock"; render();
     }catch(err){ t.disabled=false; showMsg($("setup-msg"),"Anlegen fehlgeschlagen. Sind die Firestore-Regeln aus der Anleitung veröffentlicht und ist die anonyme Anmeldung aktiv?",true); }
   }
@@ -316,12 +348,39 @@ function render(){
   if(!S.hid) return;
   const alerts=alertsList();
   $("n-warn").textContent = alerts.length || "";
-  for(const t of ["warn","stock","in","out"]){ $("p-"+t).hidden = S.tab!==t; $("t-"+t).setAttribute("aria-selected", S.tab===t); }
+  for(const t of ["warn","stock","in","out","admin"]){ $("p-"+t).hidden = S.tab!==t; const tb=$("t-"+t); if(tb) tb.setAttribute("aria-selected", S.tab===t || (t==="stock"&&S.tab==="admin")); }
   $("sub").textContent = S.hhName ? `${S.hhName}${myName()?" · "+myName():""}` : "Lebensmittel nach Lagerbereich, mit Haltbarkeits-Warnung.";
-  renderWarn(alerts); renderStock(); renderZoneSelects(); renderZones(); renderOut(); renderHousehold();
+  renderWarn(alerts); renderStock(); renderZoneSelects(); renderOut(); renderHousehold(); renderAdmin();
 }
+function renderAdmin(){
+  $("admin-panel").hidden=!S.isAdmin; $("admin-lock").hidden=S.isAdmin;
+  if(S.isAdmin){ renderZones(); if(document.activeElement!==$("hhname")) $("hhname").value=S.hhName; return; }
+  const lock=$("admin-lock"); if(lock.contains(document.activeElement)) return;
+  lock.innerHTML = S.adminSet
+    ? `<div class="card"><p style="margin:0">Hier verwaltest du Lagerbereiche, Einladungslink und Sicherung. Bitte Admin-Code eingeben.</p>
+       <form id="unlockform" style="display:flex;gap:8px"><input id="unlockcode" type="password" placeholder="Admin-Code" autocomplete="current-password"><button class="btn primary" type="submit">Entsperren</button></form>
+       <div id="unlock-msg" hidden></div></div>`
+    : `<div class="card"><p style="margin:0">Für diesen Haushalt gibt es noch keinen Admin. Wer jetzt einen Code festlegt, wird Admin.</p>
+       <form id="unlockform" style="display:flex;gap:8px"><input id="unlockcode" placeholder="Admin-Code festlegen (mind. 3 Zeichen)" autocomplete="off"><button class="btn primary" type="submit">Festlegen</button></form>
+       <div id="unlock-msg" hidden></div></div>`;
+}
+document.addEventListener("submit",async e=>{
+  if(e.target.id==="unlockform"){
+    e.preventDefault(); const code=$("unlockcode").value.trim(), msg=$("unlock-msg");
+    if(code.length<3) return showMsg(msg,"Der Code braucht mindestens 3 Zeichen.",true);
+    try{
+      if(S.adminSet) await col("admins").doc(myUid()).set({code});
+      else { const b=fs.batch(); b.set(secretRef(),{code}); b.set(col("admins").doc(myUid()),{code}); b.update(fs.collection("households").doc(S.hid),{adminSet:true}); await b.commit(); }
+    }catch(err){ showMsg(msg, err.code==="permission-denied" ? (S.adminSet?"Falscher Code.":"Es wurde gerade schon ein Code festgelegt. Bitte damit entsperren.") : "Keine Verbindung. Bitte nochmal versuchen.", true); }
+  }
+  if(e.target.id==="codechange"){
+    e.preventDefault(); const code=$("newcode").value.trim();
+    if(code.length<3) return showMsg($("admin-msg"),"Der Code braucht mindestens 3 Zeichen.",true);
+    try{ await secretRef().set({code}); $("newcode").value=""; showMsg($("admin-msg"),"Admin-Code geändert. Bereits entsperrte Geräte bleiben Admin."); }
+    catch(_){ showMsg($("admin-msg"),"Ändern fehlgeschlagen.",true); }
+  }
+});
 function renderHousehold(){
-  $("hhinfo").textContent = `„${S.hhName||"Haushalt"}“: Alle mit dem Link sehen und ändern denselben Vorrat, live.`;
   $("invite").value = inviteLink();
   if(document.activeElement!==$("myname")) $("myname").value = myName();
 }
@@ -331,7 +390,7 @@ function renderWarn(alerts){
   const notif = ("Notification" in window) ? Notification.permission : "unsupported";
   const notifBlock = notif==="default" ? `<button class="btn" id="notifbtn" type="button" style="margin-top:12px">Benachrichtigungen einschalten</button>
      <p class="hint">Die App meldet sich dann beim Öffnen, wenn etwas bald abläuft. Für Erinnerungen ohne die App: „Erinnerung“ beim Produkt tippen, das legt einen Kalendertermin an.</p>` : "";
-  if(!S.items.length){ p.innerHTML=`<div class="empty">Noch nichts eingelagert. Unten auf <b>Einlagern</b> tippen und den ersten Barcode scannen. Mitbewohner lädst du unter <b>Vorrat → Haushalt</b> ein.</div>`+notifBlock; return; }
+  if(!S.items.length){ p.innerHTML=`<div class="empty">Noch nichts eingelagert. Unten auf <b>Einlagern</b> tippen und den ersten Barcode scannen. Mitbewohner lädst du unter <b>Vorrat → Admin</b> ein.</div>`+notifBlock; return; }
   if(!alerts.length){ p.innerHTML=`<div class="okline">Alles im grünen Bereich: nichts läuft in den nächsten ${WARN_DAYS} Tagen ab.</div>`+notifBlock; return; }
   p.innerHTML = `<div class="alerts">${alerts.map(({i,s})=>`
     <div class="alert ${s.cls==="bad"?"bad":""}">
@@ -422,8 +481,10 @@ document.addEventListener("click",e=>{
   }
   if(t.id==="leavebtn"){ $("leaveconfirm").hidden=false; }
   if(t.id==="leaveno"){ $("leaveconfirm").hidden=true; }
-  if(t.id==="leaveyes"){ unsubs.forEach(u=>u()); unsubs=[]; lsSet("hid",null); S.hid=null; S.items=[]; S.zones=[]; $("leaveconfirm").hidden=true; renderSetup("start"); }
+  if(t.id==="adminlogout"){ return write(col("admins").doc(myUid()).delete()); }
+  if(t.id==="leaveyes"){ unsubs.forEach(u=>u()); unsubs=[]; lsSet("hid",null); S.hid=null; S.items=[]; S.zones=[]; S.isAdmin=false; S.adminSet=false; S.tab="warn"; $("leaveconfirm").hidden=true; renderSetup("start"); }
 });
+$("hhname").addEventListener("change",e=>{ const v=e.target.value.trim(); if(v) write(fs.collection("households").doc(S.hid).update({name:v})); });
 $("myname").addEventListener("change",e=>{ lsSet("name",e.target.value.trim()||null); render(); });
 $("zonelist").addEventListener("change",e=>{
   const id=e.target.dataset.zone, v=e.target.value.trim();
