@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4f6b2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vorrat">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>Vorratslager</title>
+<style>
+:root{
+  --bg:#f3f4f0; --surface:#ffffff; --fg:#1d221c; --muted:#5f6a5c; --line:#dde1d8;
+  --accent:#4f6b2a; --accent-fg:#ffffff; --accent-soft:#e6edd9;
+  --warn:#9a6200; --warn-soft:#fbefd6; --bad:#b0302a; --bad-soft:#f8e0de; --ok:#3c6e45; --ok-soft:#e1efe3;
+  --display:"Barlow Condensed","Roboto Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#161a15; --surface:#1f251e; --fg:#e8ece4; --muted:#9aa595; --line:#323a30;
+  --accent:#a3c46b; --accent-fg:#14180f; --accent-soft:#2c3a1d;
+  --warn:#f0b84a; --warn-soft:#3a2d12; --bad:#f08a80; --bad-soft:#3d1c19; --ok:#8fce99; --ok-soft:#1d3322; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:calc(16px + env(safe-area-inset-top));padding-bottom:calc(96px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:700;font-size:2rem;margin:0;line-height:1}
+h2{font-family:var(--display);font-weight:700;font-size:1.3rem;margin:0;letter-spacing:.02em}
+.sub{color:var(--muted);margin:4px 0 0;font-size:.95rem}
+.label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.hint{font-size:.85rem;color:var(--muted)}
+button,input,select{font:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.big{padding:14px 18px;font-size:1.05rem;width:100%}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)}
+.btn.small{padding:6px 11px;font-size:.85rem}
+.btn:disabled{opacity:.5}
+input,select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:11px 12px}
+/* bottom tab bar like a native app */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-right))}
+.tab{border:0;background:transparent;color:var(--muted);font-weight:700;font-size:.8rem;padding:8px 2px;border-radius:10px;position:relative}
+.tab[aria-selected="true"]{color:var(--accent);background:var(--accent-soft)}
+.tab .n{position:absolute;top:2px;right:18%;background:var(--bad);color:#fff;font-size:.65rem;border-radius:999px;padding:1px 6px;font-family:var(--mono)}
+.tab .n:empty{display:none}
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert{display:flex;gap:10px;align-items:center;border-radius:10px;padding:10px 12px;background:var(--warn-soft)}
+.alert.bad{background:var(--bad-soft)}
+.alert .what{flex:1;min-width:0}
+.alert strong{display:block;overflow-wrap:anywhere}
+.alert .meta{font-size:.85rem;color:var(--muted)}
+.okline{border-radius:10px;padding:12px;background:var(--ok-soft);color:var(--ok);font-weight:700}
+.pill{font-family:var(--mono);font-size:.72rem;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.none{background:var(--line);color:var(--muted)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.toolbar>*{flex:1 1 150px;min-width:0}
+.zone{display:flex;flex-direction:column}
+.zonehead{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid var(--fg);padding-bottom:4px}
+.count{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.row .name{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.row .side{display:flex;align-items:center;gap:6px;grid-row:span 2}
+.row .info{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.linkbtn{border:0;background:none;color:var(--accent);font-weight:700;padding:0;font-size:.85rem;text-decoration:underline}
+.qty{font-family:var(--mono);min-width:2.2ch;text-align:center;font-weight:600}
+.empty{color:var(--muted);padding:14px 0}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.msg{font-size:.9rem;border-radius:10px;padding:9px 11px;background:var(--accent-soft)}
+.msg.err{background:var(--bad-soft)}
+.zonerow{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.zonerow input{flex:1;min-width:0}
+.match{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.match .what{flex:1;min-width:0}
+.setup{display:flex;flex-direction:column;gap:12px}
+.setup .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
+.filebtn input{position:absolute;inset:0;opacity:0}
+/* scanner */
+.scanner{position:fixed;inset:0;z-index:20;background:#000;display:flex;flex-direction:column}
+.scanner video{flex:1;width:100%;object-fit:cover;min-height:0}
+.finder{position:absolute;left:8%;right:8%;top:32%;height:22%;border:3px solid #fff;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.45)}
+.finder::after{content:"";position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff4b3e}
+.scanbar{position:absolute;left:0;right:0;bottom:0;padding:16px max(16px,env(safe-area-inset-left)) calc(16px + env(safe-area-inset-bottom));display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.scantext{position:absolute;left:0;right:0;top:calc(18% + env(safe-area-inset-top));text-align:center;color:#fff;font-weight:700;padding:0 20px;text-shadow:0 1px 3px #000}
+@media (max-width:420px){.form{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Vorratslager</h1>
+    <p class="sub" id="sub">Lebensmittel nach Lagerbereich, mit Haltbarkeits-Warnung.</p>
+  </header>
+
+  <section id="p-setup" hidden></section>
+  <div id="syncline" class="hint" hidden></div>
+  <section id="p-warn"></section>
+
+  <section id="p-stock" hidden>
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Suchen: Name, Produktart, Barcode">
+      <select id="zf"></select>
+    </div>
+    <div id="stocklist" style="display:flex;flex-direction:column;gap:22px;margin-top:16px"></div>
+    <div style="margin-top:28px;display:flex;flex-direction:column;gap:6px">
+      <h2>Lagerbereiche</h2>
+      <div id="zonelist"></div>
+      <form id="zoneadd" style="display:flex;gap:8px;margin-top:8px">
+        <input id="zonename" placeholder="Neuer Bereich, z. B. Kellerregal">
+        <button class="btn" type="submit">Anlegen</button>
+      </form>
+    </div>
+    <div style="margin-top:28px;display:flex;flex-direction:column;gap:8px">
+      <h2>Haushalt</h2>
+      <p class="hint" style="margin:0" id="hhinfo"></p>
+      <div class="field"><span class="label">Einladungslink für Mitbewohner</span>
+        <input id="invite" readonly style="font-family:var(--mono);font-size:.8rem"></div>
+      <div class="toolbar">
+        <button class="btn primary" id="sharebtn" type="button">Link teilen</button>
+        <button class="btn" id="copybtn" type="button">Link kopieren</button>
+      </div>
+      <div class="field"><span class="label">Dein Name (wird bei deinen Einträgen angezeigt)</span><input id="myname" placeholder="z. B. Jonas"></div>
+      <button class="btn danger" id="leavebtn" type="button">Haushalt auf diesem Gerät verlassen</button>
+      <div id="leaveconfirm" hidden class="msg err">Wirklich verlassen? Die Daten bleiben für die anderen erhalten. Zum Zurückkommen brauchst du den Einladungslink.
+        <div class="toolbar" style="margin-top:8px"><button class="btn danger" id="leaveyes" type="button">Ja, verlassen</button><button class="btn" id="leaveno" type="button">Abbrechen</button></div></div>
+    </div>
+    <div style="margin-top:28px;display:flex;flex-direction:column;gap:8px">
+      <h2>Sicherung</h2>
+      <p class="hint" style="margin:0">Alles wird automatisch für den ganzen Haushalt gespeichert. Die Sicherungsdatei ist nur ein zusätzlicher Notfall-Export.</p>
+      <div class="toolbar">
+        <button class="btn" id="exportbtn" type="button">Sicherung speichern</button>
+        <label class="btn filebtn">Sicherung laden<input id="importfile" type="file" accept="application/json,.json"></label>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-in" hidden>
+    <form id="inform" class="form">
+      <div class="full"><button class="btn primary big" type="button" data-scan="in">Barcode scannen</button></div>
+      <div id="in-msg" class="full" hidden></div>
+      <div class="field full"><span class="label">Barcode</span><input id="in-code" inputmode="numeric" placeholder="optional, z. B. 4102560010065" autocomplete="off"></div>
+      <div class="field full"><span class="label">Name</span><input id="in-name" required placeholder="z. B. Oliven grün, Dose"></div>
+      <div class="field"><span class="label">Produktart</span><input id="in-cat" list="cats" placeholder="z. B. Konserven"></div>
+      <div class="field"><span class="label">Lagerbereich</span><select id="in-zone" required></select></div>
+      <div class="field"><span class="label">Haltbar bis (falls vorhanden)</span><input id="in-exp" type="date"></div>
+      <div class="field"><span class="label">Menge</span><input id="in-qty" type="number" min="1" value="1" inputmode="numeric"></div>
+      <div class="full" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary" type="submit">Einlagern</button>
+        <button class="btn ghost" type="reset">Leeren</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="p-out" hidden>
+    <button class="btn primary big" type="button" data-scan="out">Verbrauchtes Produkt scannen</button>
+    <div class="field" style="margin-top:14px">
+      <span class="label">Oder suchen</span>
+      <input id="out-code" placeholder="Barcode oder Name" autocomplete="off">
+    </div>
+    <div id="out-msg" hidden style="margin-top:10px"></div>
+    <div id="out-list" style="margin-top:10px"></div>
+  </section>
+</div>
+
+<nav class="tabs" role="tablist">
+  <button class="tab" role="tab" data-tab="warn" id="t-warn">Warnungen<span class="n" id="n-warn"></span></button>
+  <button class="tab" role="tab" data-tab="stock" id="t-stock">Vorrat</button>
+  <button class="tab" role="tab" data-tab="in" id="t-in">Einlagern</button>
+  <button class="tab" role="tab" data-tab="out" id="t-out">Entnehmen</button>
+</nav>
+
+<div class="scanner" id="scanner" hidden>
+  <video id="video" playsinline muted></video>
+  <div class="finder"></div>
+  <div class="scantext" id="scantext">Barcode in den Rahmen halten</div>
+  <div class="scanbar">
+    <button class="btn" id="torchbtn" type="button" hidden>Licht</button>
+    <label class="btn filebtn">Foto statt Live<input id="photofile" type="file" accept="image/*" capture="environment"></label>
+    <button class="btn primary" id="scanclose" type="button">Abbrechen</button>
+  </div>
+</div>
+
+<datalist id="cats">
+  <option value="Konserven"><option value="Nudeln & Reis"><option value="Mehl & Backen"><option value="Gewürze & Öle">
+  <option value="Getränke"><option value="Snacks & Süßes"><option value="Frühstück"><option value="Milchprodukte">
+  <option value="Tiefkühl"><option value="Saucen & Aufstriche"><option value="Sonstiges">
+</datalist>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+<script src="ean.js"></script>
+<script>
+const WARN_DAYS = 7, CRIT_DAYS = 2, KEY = "vorratslager-v2";
+const S = { zones:[], items:[], products:{}, tab:"warn", hid:null, hhName:"", ready:false };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+const lsGet = k => { try{ return localStorage.getItem(KEY+"-"+k); }catch(_){ return null; } };
+const lsSet = (k,v) => { try{ v==null ? localStorage.removeItem(KEY+"-"+k) : localStorage.setItem(KEY+"-"+k,v); }catch(_){} };
+function newHouseholdId(){ const a="abcdefghijkmnpqrstuvwxyz23456789"; const r=new Uint8Array(24); crypto.getRandomValues(r); return Array.from(r,x=>a[x%a.length]).join(""); }
+const myName = () => lsGet("name") || "";
+
+/* ---------- Firebase ---------- */
+let fs=null, unsubs=[];
+const col = name => fs.collection("households").doc(S.hid).collection(name);
+const inc = n => firebase.firestore.FieldValue.increment(n);
+async function initFirebase(){
+  if(!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.apiKey || String(window.FIREBASE_CONFIG.apiKey).includes("HIER")) throw new Error("config");
+  if(!window.firebase) throw new Error("offline");
+  firebase.initializeApp(window.FIREBASE_CONFIG);
+  fs=firebase.firestore();
+  try{ await fs.enablePersistence({synchronizeTabs:true}); }catch(_){}
+  // Bereits angemeldet (auch offline) → weiter; sonst einmal anonym anmelden.
+  await new Promise((res,rej)=>{
+    const off=firebase.auth().onAuthStateChanged(u=>{
+      off();
+      if(u) res(u); else firebase.auth().signInAnonymously().then(c=>res(c.user),rej);
+    });
+  });
+}
+function subscribe(){
+  unsubs.forEach(u=>u()); unsubs=[]; S.ready=false;
+  const sync=(name,fn)=>unsubs.push(col(name).onSnapshot({includeMetadataChanges:true},snap=>{
+    fn(snap.docs.map(d=>({id:d.id,...d.data()})));
+    S.ready=true; setSync(snap.metadata.hasPendingWrites?"Wird synchronisiert …":(snap.metadata.fromCache?"Offline: Änderungen werden später übertragen.":""));
+    render();
+  },err=>setSync("Kein Zugriff auf den Haushalt. Stimmt der Einladungslink?",true)));
+  sync("zones",a=>S.zones=a);
+  sync("items",a=>{ S.items=a; a.filter(i=>(i.qty||0)<=0).forEach(i=>col("items").doc(i.id).delete().catch(()=>{})); S.items=a.filter(i=>(i.qty||0)>0); });
+  sync("products",a=>{ S.products={}; a.forEach(({id,...r})=>S.products[id]=r); });
+  unsubs.push(fs.collection("households").doc(S.hid).onSnapshot(d=>{ S.hhName=(d.data()||{}).name||""; render(); },()=>{}));
+}
+function setSync(t,err){ const el=$("syncline"); el.hidden=!t; el.textContent=t||""; el.style.color=err?"var(--bad)":""; }
+const write = p => p.catch(e=>setSync("Speichern fehlgeschlagen: "+(e.code==="permission-denied"?"keine Berechtigung.":"bitte nochmal versuchen."),true));
+
+/* ---------- dates ---------- */
+function today(){ const d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+function isoOf(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function daysLeft(iso){ if(!iso) return null; const [y,m,d]=iso.split("-").map(Number); return Math.round((new Date(y,m-1,d)-today())/86400000); }
+function fmtDate(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${d}.${m}.${y}`; }
+function status(iso){
+  const n=daysLeft(iso);
+  if(n===null) return {cls:"none",txt:"ohne MHD",n:Infinity};
+  if(n<0) return {cls:"bad",txt:`seit ${-n} T abgelaufen`,n};
+  if(n===0) return {cls:"bad",txt:"läuft heute ab",n};
+  if(n<=CRIT_DAYS) return {cls:"bad",txt:`noch ${n} T`,n};
+  if(n<=WARN_DAYS) return {cls:"warn",txt:`noch ${n} T`,n};
+  return {cls:"ok",txt:fmtDate(iso),n};
+}
+const zoneName = id => (S.zones.find(z=>z.id===id)||{}).name || "Ohne Bereich";
+const sortedZones = () => [...S.zones].sort((a,b)=>(a.order??0)-(b.order??0) || a.name.localeCompare(b.name,"de",{numeric:true}));
+const alertsList = () => S.items.map(i=>({i,s:status(i.expiry)})).filter(x=>x.s.n<=WARN_DAYS).sort((a,b)=>a.s.n-b.s.n);
+const inviteLink = () => location.origin + location.pathname + "?h=" + S.hid;
+
+/* ---------- setup screens ---------- */
+function renderSetup(kind,detail){
+  const p=$("p-setup"); p.hidden=false;
+  for(const t of ["warn","stock","in","out"]) $("p-"+t).hidden=true;
+  document.querySelector(".tabs").hidden=true;
+  if(kind==="config"){ p.innerHTML=`<div class="setup"><div class="card"><h2>Einrichtung fehlt noch</h2>
+    <p style="margin:0">In der Datei <b>config.js</b> fehlen die Zugangsdaten deines Firebase-Projekts. Schritt 1 bis 3 der Anleitung erklären, wo du sie findest.</p></div></div>`; return; }
+  if(kind==="error"){ p.innerHTML=`<div class="setup"><div class="card"><h2>Verbindung fehlgeschlagen</h2>
+    <p style="margin:0">${esc(detail)}</p><button class="btn primary" type="button" onclick="location.reload()">Nochmal versuchen</button></div></div>`; return; }
+  p.innerHTML=`<div class="setup">
+    <div class="field"><span class="label">Dein Name</span><input id="setup-name" placeholder="z. B. Jonas" value="${esc(myName())}"></div>
+    <div class="card"><h2>Neuen Haushalt anlegen</h2>
+      <p class="hint" style="margin:0">Für die erste Person. Danach schickst du den Einladungslink an deine Mitbewohner.</p>
+      <input id="setup-hh" placeholder="Name, z. B. WG Sanderstraße">
+      <button class="btn primary" id="setup-create" type="button">Haushalt anlegen</button></div>
+    <div class="card"><h2>Haushalt beitreten</h2>
+      <p class="hint" style="margin:0">Öffne einfach den Einladungslink, den du bekommen hast. Oder füge ihn hier ein.</p>
+      <input id="setup-link" placeholder="Einladungslink oder Code">
+      <button class="btn" id="setup-join" type="button">Beitreten</button></div>
+    <div id="setup-msg" hidden></div></div>`;
+}
+function enterHousehold(hid){
+  S.hid=hid; lsSet("hid",hid);
+  $("p-setup").hidden=true; document.querySelector(".tabs").hidden=false;
+  subscribe(); render();
+}
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.id==="setup-create"){
+    const n=$("setup-name").value.trim(); if(n) lsSet("name",n);
+    const hid=newHouseholdId(); S.hid=hid; t.disabled=true;
+    try{
+      await fs.collection("households").doc(hid).set({name:$("setup-hh").value.trim()||"Unser Haushalt",created:firebase.firestore.FieldValue.serverTimestamp()});
+      const b=fs.batch(); [1,2,3,4].forEach(k=>b.set(col("zones").doc("z"+k),{name:"Bereich "+k,order:k})); await b.commit();
+      enterHousehold(hid); S.tab="stock"; render();
+    }catch(err){ t.disabled=false; showMsg($("setup-msg"),"Anlegen fehlgeschlagen. Sind die Firestore-Regeln aus der Anleitung veröffentlicht und ist die anonyme Anmeldung aktiv?",true); }
+  }
+  if(t.id==="setup-join"){
+    const n=$("setup-name").value.trim(); if(n) lsSet("name",n);
+    const raw=$("setup-link").value.trim(); const m=raw.match(/[?&]h=([a-z0-9]{20,})/i); const hid=m?m[1]:raw;
+    if(!/^[a-z0-9]{20,}$/i.test(hid)) return showMsg($("setup-msg"),"Das sieht nicht nach einem gültigen Einladungslink aus.",true);
+    try{ const d=await fs.collection("households").doc(hid).get(); if(!d.exists) throw 0; enterHousehold(hid); }
+    catch(_){ showMsg($("setup-msg"),"Diesen Haushalt gibt es nicht. Bitte den Link nochmal kopieren.",true); }
+  }
+});
+
+/* ---------- render ---------- */
+function render(){
+  if(!S.hid) return;
+  const alerts=alertsList();
+  $("n-warn").textContent = alerts.length || "";
+  for(const t of ["warn","stock","in","out"]){ $("p-"+t).hidden = S.tab!==t; $("t-"+t).setAttribute("aria-selected", S.tab===t); }
+  $("sub").textContent = S.hhName ? `${S.hhName}${myName()?" · "+myName():""}` : "Lebensmittel nach Lagerbereich, mit Haltbarkeits-Warnung.";
+  renderWarn(alerts); renderStock(); renderZoneSelects(); renderZones(); renderOut(); renderHousehold();
+}
+function renderHousehold(){
+  $("hhinfo").textContent = `„${S.hhName||"Haushalt"}“: Alle mit dem Link sehen und ändern denselben Vorrat, live.`;
+  $("invite").value = inviteLink();
+  if(document.activeElement!==$("myname")) $("myname").value = myName();
+}
+function renderWarn(alerts){
+  const p=$("p-warn");
+  if(!S.ready){ p.innerHTML=`<div class="empty">Vorrat wird geladen …</div>`; return; }
+  const notif = ("Notification" in window) ? Notification.permission : "unsupported";
+  const notifBlock = notif==="default" ? `<button class="btn" id="notifbtn" type="button" style="margin-top:12px">Benachrichtigungen einschalten</button>
+     <p class="hint">Die App meldet sich dann beim Öffnen, wenn etwas bald abläuft. Für Erinnerungen ohne die App: „Erinnerung“ beim Produkt tippen, das legt einen Kalendertermin an.</p>` : "";
+  if(!S.items.length){ p.innerHTML=`<div class="empty">Noch nichts eingelagert. Unten auf <b>Einlagern</b> tippen und den ersten Barcode scannen. Mitbewohner lädst du unter <b>Vorrat → Haushalt</b> ein.</div>`+notifBlock; return; }
+  if(!alerts.length){ p.innerHTML=`<div class="okline">Alles im grünen Bereich: nichts läuft in den nächsten ${WARN_DAYS} Tagen ab.</div>`+notifBlock; return; }
+  p.innerHTML = `<div class="alerts">${alerts.map(({i,s})=>`
+    <div class="alert ${s.cls==="bad"?"bad":""}">
+      <div class="what"><strong>${esc(i.name)}${(i.qty||1)>1?` ×${i.qty}`:""}</strong>
+      <span class="meta">${esc(zoneName(i.zoneId))} · MHD ${fmtDate(i.expiry)}</span></div>
+      <span class="pill ${s.cls}">${s.txt}</span>
+      <button class="btn small" data-use="${i.id}">Verbraucht</button>
+    </div>`).join("")}</div>
+    <p class="hint">Rot: abgelaufen oder höchstens ${CRIT_DAYS} Tage. Gelb: innerhalb von ${WARN_DAYS} Tagen.</p>`+notifBlock;
+}
+function renderStock(){
+  const q=$("q").value.trim().toLowerCase(), zf=$("zf").value, list=$("stocklist");
+  const items=S.items.filter(i=>(!zf||i.zoneId===zf) && (!q || [i.name,i.category,i.barcode].join(" ").toLowerCase().includes(q)));
+  const groups=sortedZones().map(z=>({z,items:items.filter(i=>i.zoneId===z.id)}));
+  const orphan=items.filter(i=>!S.zones.some(z=>z.id===i.zoneId));
+  if(orphan.length) groups.push({z:{id:"",name:"Ohne Bereich"},items:orphan});
+  const shown=groups.filter(g=>g.items.length || (!q && (!zf||g.z.id===zf)));
+  if(!shown.length){ list.innerHTML=`<div class="empty">Keine Treffer.</div>`; return; }
+  list.innerHTML = shown.map(({z,items})=>`
+    <div class="zone">
+      <div class="zonehead"><h2>${esc(z.name)}</h2><span class="count">${items.reduce((a,i)=>a+(i.qty||1),0)} Stk.</span></div>
+      ${items.length ? items.sort((a,b)=>status(a.expiry).n-status(b.expiry).n).map(i=>{const s=status(i.expiry);return `
+        <div class="row">
+          <div class="name">${esc(i.name)}</div>
+          <div class="side">
+            <button class="btn small" data-dec="${i.id}" aria-label="Eins verbraucht">−</button>
+            <span class="qty">${i.qty||1}</span>
+            <button class="btn small" data-inc="${i.id}" aria-label="Eins mehr">+</button>
+          </div>
+          <div class="info"><span class="pill ${s.cls}">${s.txt}</span><span>${esc(i.category||"")}</span>
+            ${i.addedBy?`<span>von ${esc(i.addedBy)}</span>`:""}
+            ${i.expiry?`<button class="linkbtn" data-ics="${i.id}">Erinnerung</button>`:""}</div>
+        </div>`}).join("") : `<div class="empty">Leer.</div>`}
+    </div>`).join("");
+}
+function renderZoneSelects(){
+  const opts=sortedZones().map(z=>`<option value="${z.id}">${esc(z.name)}</option>`).join("");
+  const zf=$("zf"), cur=zf.value; zf.innerHTML=`<option value="">Alle Bereiche</option>`+opts; zf.value=cur;
+  const iz=$("in-zone"), cz=iz.value; iz.innerHTML=opts || `<option value="">Erst einen Bereich anlegen</option>`; if(cz && S.zones.some(z=>z.id===cz)) iz.value=cz;
+}
+function renderZones(){
+  const el=$("zonelist"); if(el.contains(document.activeElement)) return;
+  el.innerHTML = sortedZones().map(z=>{const n=S.items.filter(i=>i.zoneId===z.id).length; return `
+    <div class="zonerow">
+      <input value="${esc(z.name)}" data-zone="${z.id}" aria-label="Name des Bereichs">
+      <span class="count">${n} Pos.</span>
+      <button class="btn small danger" data-delzone="${z.id}" ${n?"disabled":""}>Löschen</button>
+    </div>`}).join("") || `<div class="empty">Noch keine Bereiche.</div>`;
+}
+function renderOut(){
+  const q=$("out-code").value.trim().toLowerCase(), list=$("out-list");
+  if(!q){ list.innerHTML=`<div class="empty">Scannen oder Namen tippen. Das Produkt wird um eins reduziert, bei null entfernt.</div>`; return; }
+  const m=S.items.filter(i=>(i.barcode||"")===q || i.name.toLowerCase().includes(q)).sort((a,b)=>status(a.expiry).n-status(b.expiry).n);
+  if(!m.length){ list.innerHTML=`<div class="empty">Nichts im Vorrat gefunden.</div>`; return; }
+  list.innerHTML = m.map(i=>{const s=status(i.expiry);return `
+    <div class="match"><div class="what"><strong>${esc(i.name)}</strong> <span class="qty">×${i.qty||1}</span><br>
+      <span class="hint">${esc(zoneName(i.zoneId))}</span> <span class="pill ${s.cls}">${s.txt}</span></div>
+      <button class="btn primary small" data-use="${i.id}">1 verbraucht</button></div>`}).join("") +
+    (m.length>1?`<p class="hint">Das Produkt mit dem frühesten MHD steht oben.</p>`:"");
+}
+function showMsg(el,text,err){ el.hidden=false; el.className="msg"+(err?" err":""); el.textContent=text; }
+function alertMsg(t){ showMsg($("in-msg"),t,true); }
+
+/* ---------- actions ---------- */
+function changeQty(id,delta){
+  const it=S.items.find(i=>i.id===id); if(!it) return;
+  if(navigator.vibrate) navigator.vibrate(30);
+  if((it.qty||1)+delta<=0) write(col("items").doc(id).delete());
+  else write(col("items").doc(id).update({qty:inc(delta)}));
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.dataset.tab){ S.tab=t.dataset.tab; render(); window.scrollTo(0,0); return; }
+  if(t.dataset.use) return changeQty(t.dataset.use,-1);
+  if(t.dataset.dec) return changeQty(t.dataset.dec,-1);
+  if(t.dataset.inc) return changeQty(t.dataset.inc,+1);
+  if(t.dataset.delzone) return write(col("zones").doc(t.dataset.delzone).delete());
+  if(t.dataset.ics) return downloadIcs(S.items.find(i=>i.id===t.dataset.ics));
+  if(t.dataset.scan) return openScanner(t.dataset.scan);
+  if(t.id==="notifbtn") return Notification.requestPermission().then(()=>{ render(); notifyIfNeeded(true); });
+  if(t.id==="sharebtn" && navigator.share){
+    return navigator.share({title:"Vorratslager",text:`Tritt unserem Vorratslager „${S.hhName}“ bei:`,url:inviteLink()}).catch(()=>{});
+  }
+  if(t.id==="copybtn"||t.id==="sharebtn"){
+    const old=t.textContent;
+    const done=()=>{ t.textContent="Kopiert"; setTimeout(()=>t.textContent=old,1500); };
+    try{ navigator.clipboard.writeText(inviteLink()).then(done).catch(()=>$("invite").select()); }catch(_){ $("invite").select(); }
+  }
+  if(t.id==="leavebtn"){ $("leaveconfirm").hidden=false; }
+  if(t.id==="leaveno"){ $("leaveconfirm").hidden=true; }
+  if(t.id==="leaveyes"){ unsubs.forEach(u=>u()); unsubs=[]; lsSet("hid",null); S.hid=null; S.items=[]; S.zones=[]; $("leaveconfirm").hidden=true; renderSetup("start"); }
+});
+$("myname").addEventListener("change",e=>{ lsSet("name",e.target.value.trim()||null); render(); });
+$("zonelist").addEventListener("change",e=>{
+  const id=e.target.dataset.zone, v=e.target.value.trim();
+  if(id && v) write(col("zones").doc(id).update({name:v}));
+});
+$("zoneadd").addEventListener("submit",e=>{
+  e.preventDefault(); const v=$("zonename").value.trim(); if(!v) return;
+  write(col("zones").doc(uid()).set({name:v,order:Math.max(0,...S.zones.map(z=>z.order||0))+1})); $("zonename").value="";
+});
+$("q").addEventListener("input",renderStock); $("zf").addEventListener("change",renderStock);
+$("out-code").addEventListener("input",renderOut);
+
+/* product lookup: household memory first, then Open Food Facts */
+const CAT_MAP=[["canned","Konserven"],["pasta","Nudeln & Reis"],["rice","Nudeln & Reis"],["flour","Mehl & Backen"],["baking","Mehl & Backen"],
+  ["spice","Gewürze & Öle"],["oil","Gewürze & Öle"],["water","Getränke"],["beverage","Getränke"],["drink","Getränke"],["snack","Snacks & Süßes"],
+  ["sweet","Snacks & Süßes"],["chocolate","Snacks & Süßes"],["breakfast","Frühstück"],["cereal","Frühstück"],["dair","Milchprodukte"],["cheese","Milchprodukte"],
+  ["frozen","Tiefkühl"],["sauce","Saucen & Aufstriche"],["spread","Saucen & Aufstriche"],["condiment","Saucen & Aufstriche"]];
+async function lookup(code){
+  if(S.products[code]) return {...S.products[code], known:true};
+  try{
+    const ctl=new AbortController(); setTimeout(()=>ctl.abort(),6000);
+    const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,product_name_de,brands,quantity,categories_tags`,{signal:ctl.signal});
+    const d=await r.json(); if(d.status!==1||!d.product) return null;
+    const p=d.product, base=(p.product_name_de||p.product_name||"").trim(); if(!base) return null;
+    const brand=(p.brands||"").split(",")[0].trim();
+    const name=[brand && !base.toLowerCase().includes(brand.toLowerCase())?brand:"",base,p.quantity||""].filter(Boolean).join(" ");
+    const tags=(p.categories_tags||[]).join(" ");
+    return {name,category:(CAT_MAP.find(([k])=>tags.includes(k))||[])[1]||""};
+  }catch(_){ return null; }
+}
+async function applyCode(code){
+  $("in-code").value=code;
+  showMsg($("in-msg"),`Barcode ${code} erkannt, suche Produkt …`);
+  const p=await lookup(code);
+  if(p){ $("in-name").value=p.name||""; if(p.category) $("in-cat").value=p.category;
+    if(p.zoneId && S.zones.some(z=>z.id===p.zoneId)) $("in-zone").value=p.zoneId;
+    showMsg($("in-msg"), p.known?`Bekannt: ${p.name}. Nur noch Haltbarkeit prüfen.`:`Gefunden: ${p.name}. Name kurz prüfen, Haltbarkeit eintragen.`);
+    $("in-exp").focus(); }
+  else { showMsg($("in-msg"),`Barcode ${code}: kein Produkt gefunden. Bitte einmal Name eintragen, beim nächsten Scan ist er für alle gespeichert.`); $("in-name").focus(); }
+}
+$("inform").addEventListener("submit",e=>{
+  e.preventDefault();
+  const zoneId=$("in-zone").value; if(!zoneId) return alertMsg("Bitte zuerst unter Vorrat einen Lagerbereich anlegen.");
+  const data={ name:$("in-name").value.trim(), category:$("in-cat").value.trim(), zoneId, expiry:$("in-exp").value||"",
+               barcode:$("in-code").value.trim(), qty:Math.max(1,parseInt($("in-qty").value)||1) };
+  if(!data.name) return;
+  const same=S.items.find(i=>i.name===data.name && i.zoneId===zoneId && (i.expiry||"")===data.expiry && (i.barcode||"")===data.barcode);
+  if(same) write(col("items").doc(same.id).update({qty:inc(data.qty)}));
+  else write(col("items").doc(uid()).set({...data,added:isoOf(today()),addedBy:myName()}));
+  if(data.barcode && /^[0-9]{6,14}$/.test(data.barcode)) write(col("products").doc(data.barcode).set({name:data.name,category:data.category,zoneId}));
+  showMsg($("in-msg"),`${data.name} ×${data.qty} liegt jetzt in ${zoneName(zoneId)}.`);
+  const keep=zoneId; e.target.reset(); $("in-zone").value=keep; $("in-qty").value=1;
+});
+$("inform").addEventListener("reset",()=>{ $("in-msg").hidden=true; });
+function outCode(code){
+  S.tab="out"; $("out-code").value=code; render();
+  const known=S.products[code]; const hits=S.items.filter(i=>i.barcode===code);
+  showMsg($("out-msg"), hits.length?`Erkannt: ${hits[0].name}`:(known?`${known.name} ist gerade nicht im Vorrat.`:`Barcode ${code} ist nicht im Vorrat.`), !hits.length);
+}
+
+/* ---------- scanner ---------- */
+const eanDecode = makeEanDecoder();
+let stream=null, scanTarget="in", scanTimer=null, lastCode=null, detector=null;
+const work=document.createElement("canvas"), wctx=work.getContext("2d",{willReadFrequently:true});
+function grayOf(src,sw,sh,max){
+  const sc=Math.min(1,max/Math.max(sw,sh)); work.width=Math.round(sw*sc); work.height=Math.round(sh*sc);
+  wctx.drawImage(src,0,0,work.width,work.height);
+  const d=wctx.getImageData(0,0,work.width,work.height).data, g=new Uint8Array(work.width*work.height);
+  for(let i=0;i<g.length;i++) g[i]=(d[i*4]*77+d[i*4+1]*150+d[i*4+2]*29)>>8;
+  return {g,w:work.width,h:work.height};
+}
+async function openScanner(target){
+  scanTarget=target; lastCode=null;
+  $("scanner").hidden=false; $("scantext").textContent="Kamera wird gestartet …";
+  if("BarcodeDetector" in window){ try{ detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]}); }catch(_){ detector=null; } }
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080}},audio:false});
+    const v=$("video"); v.srcObject=stream; await v.play();
+    const track=stream.getVideoTracks()[0]; const caps=track.getCapabilities?track.getCapabilities():{};
+    $("torchbtn").hidden=!caps.torch;
+    try{ if(caps.focusMode && caps.focusMode.includes("continuous")) await track.applyConstraints({advanced:[{focusMode:"continuous"}]}); }catch(_){}
+    $("scantext").textContent="Barcode in den Rahmen halten";
+    scanLoop();
+  }catch(err){
+    $("scantext").textContent = location.protocol!=="https:" && location.hostname!=="localhost"
+      ? "Live-Kamera braucht eine https-Adresse. Nutze „Foto statt Live“."
+      : "Kein Kamerazugriff. Erlaube die Kamera in den Einstellungen oder nutze „Foto statt Live“.";
+  }
+}
+function closeScanner(){
+  clearTimeout(scanTimer); scanTimer=null;
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  $("video").srcObject=null; $("scanner").hidden=true;
+}
+function found(code){
+  if(navigator.vibrate) navigator.vibrate([40,40,40]);
+  closeScanner();
+  if(scanTarget==="in"){ S.tab="in"; render(); applyCode(code); } else outCode(code);
+}
+async function scanLoop(){
+  const v=$("video"); if(!stream) return;
+  if(v.readyState>=2 && v.videoWidth){
+    let code=null;
+    if(detector){ try{ const r=await detector.detect(v); if(r.length) code=r[0].rawValue; }catch(_){} }
+    if(!code){ const {g,w,h}=grayOf(v,v.videoWidth,v.videoHeight,1000); const r=eanDecode(g,w,h); if(r) code=r.code; }
+    if(code){ if(code===lastCode || detector) return found(code); lastCode=code; }
+  }
+  scanTimer=setTimeout(scanLoop,120);
+}
+$("scanclose").addEventListener("click",closeScanner);
+$("torchbtn").addEventListener("click",async()=>{
+  const t=stream&&stream.getVideoTracks()[0]; if(!t) return;
+  const on=!t.getSettings().torch; try{ await t.applyConstraints({advanced:[{torch:on}]}); }catch(_){}
+});
+$("photofile").addEventListener("change",async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  $("scantext").textContent="Lese Foto …";
+  const url=URL.createObjectURL(f);
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url;});
+    for(const max of [1600,2400,1000]){ const {g,w,h}=grayOf(img,img.naturalWidth,img.naturalHeight,max); const r=eanDecode(g,w,h); if(r) return found(r.code); }
+    if(detector){ const r=await detector.detect(img); if(r.length) return found(r[0].rawValue); }
+    $("scantext").textContent="Kein Barcode erkannt. Näher ran, gerade halten, gutes Licht.";
+  }catch(_){ $("scantext").textContent="Foto konnte nicht gelesen werden."; }
+  finally{ URL.revokeObjectURL(url); }
+});
+
+/* ---------- reminders ---------- */
+function downloadFile(name,text,type){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000);
+}
+function downloadIcs(it){
+  if(!it||!it.expiry) return;
+  const [y,m,d]=it.expiry.split("-").map(Number); const rem=new Date(y,m-1,d); rem.setDate(rem.getDate()-3);
+  const dt=x=>`${x.getFullYear()}${String(x.getMonth()+1).padStart(2,"0")}${String(x.getDate()).padStart(2,"0")}`;
+  const end=new Date(rem); end.setDate(end.getDate()+1);
+  const txt=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Vorratslager//DE","BEGIN:VEVENT",`UID:${it.id}-${it.expiry}@vorratslager`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g,"").slice(0,15)}Z`,`DTSTART;VALUE=DATE:${dt(rem)}`,`DTEND;VALUE=DATE:${dt(end)}`,
+    `SUMMARY:MHD: ${it.name.replace(/[,;]/g," ")} (${zoneName(it.zoneId).replace(/[,;]/g," ")})`,
+    `DESCRIPTION:Läuft am ${fmtDate(it.expiry)} ab.`,"BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:MHD-Erinnerung","TRIGGER:PT9H","END:VALARM",
+    "END:VEVENT","END:VCALENDAR"].join("\r\n");
+  downloadFile(`mhd-${it.name.replace(/[^\wäöüÄÖÜß-]+/g,"_").slice(0,30)}.ics`,txt,"text/calendar");
+}
+async function notifyIfNeeded(force){
+  if(!S.ready || !("Notification" in window) || Notification.permission!=="granted") return;
+  const a=alertsList(); if(!a.length) return;
+  const day=isoOf(today()); if(!force && lsGet("notified")===day) return;
+  const bad=a.filter(x=>x.s.cls==="bad").length;
+  const body=a.slice(0,4).map(x=>`${x.i.name}: ${x.s.txt}`).join("\n")+(a.length>4?`\n… und ${a.length-4} weitere`:"");
+  const title=bad?`${bad} Produkt${bad>1?"e":""} abgelaufen oder kurz davor`:`${a.length} Produkt${a.length>1?"e":""} laufen bald ab`;
+  try{ const reg=await navigator.serviceWorker.ready; await reg.showNotification(title,{body,icon:"icon-192.png",tag:"mhd"}); }
+  catch(_){ try{ new Notification(title,{body}); }catch(__){} }
+  lsSet("notified",day);
+}
+
+/* ---------- backup ---------- */
+$("exportbtn").addEventListener("click",()=>downloadFile(`vorrat-sicherung-${isoOf(today())}.json`,JSON.stringify({zones:S.zones,items:S.items,products:S.products},null,1),"application/json"));
+$("importfile").addEventListener("change",async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  try{
+    const d=JSON.parse(await f.text()); if(!Array.isArray(d.items)||!Array.isArray(d.zones)) throw 0;
+    const writes=[...d.zones.map(z=>["zones",z]),...d.items.map(i=>["items",i]),...Object.entries(d.products||{}).map(([id,p])=>["products",{id,...p}])];
+    for(let k=0;k<writes.length;k+=400){ const b=fs.batch(); writes.slice(k,k+400).forEach(([c,{id,...rest}])=>b.set(col(c).doc(String(id)),rest)); await b.commit(); }
+    setSync(`${d.items.length} Produkte aus der Sicherung übernommen.`);
+  }catch(_){ setSync("Diese Datei ist keine gültige Vorrats-Sicherung.",true); }
+});
+
+/* ---------- boot ---------- */
+(async()=>{
+  if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+  const urlHid=new URLSearchParams(location.search).get("h");
+  if(urlHid){ history.replaceState(null,"",location.pathname); }
+  try{ await initFirebase(); }
+  catch(err){ return renderSetup(err.message==="config"?"config":"error", err.message==="offline"?"Beim ersten Start braucht die App Internet.":"Anmeldung fehlgeschlagen. Ist in Firebase die anonyme Anmeldung aktiviert und deine Adresse als autorisierte Domain eingetragen?"); }
+  const hid = (urlHid && /^[a-z0-9]{20,}$/i.test(urlHid)) ? urlHid : lsGet("hid");
+  if(hid){
+    enterHousehold(hid);
+    fs.collection("households").doc(hid).get().then(d=>{ if(!d.exists && !d.metadata.fromCache) setSync("Diesen Haushalt gibt es nicht. Bitte den Einladungslink prüfen oder unter Vorrat → Haushalt verlassen.",true); }).catch(()=>{});
+    if(urlHid && !myName()){ S.tab="stock"; render(); setTimeout(()=>$("myname").focus(),300); setSync("Willkommen im Haushalt! Trag unten noch deinen Namen ein."); }
+  } else renderSetup("start");
+  setTimeout(()=>notifyIfNeeded(false),2500);
+})();
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ render(); notifyIfNeeded(false); } else closeScanner(); });
+</script>
+</body>
+</html>
