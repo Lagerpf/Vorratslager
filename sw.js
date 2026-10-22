@@ -1,5 +1,5 @@
 // Offline-Cache für die App-Dateien. Version erhöhen, wenn sich Dateien ändern.
-const CACHE = "vorrat-v2";
+const CACHE = "vorrat-v3";
 const FILES = ["./", "index.html", "ean.js", "config.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
