@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#4f6b2a">
+<meta name="theme-color" content="#4f6b2a" id="themecolor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Vorrat">
 <link rel="manifest" href="manifest.webmanifest">
@@ -20,15 +20,19 @@
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root{
-  --bg:#161a15; --surface:#1f251e; --fg:#e8ece4; --muted:#9aa595; --line:#323a30;
-  --accent:#a3c46b; --accent-fg:#14180f; --accent-soft:#2c3a1d;
-  --warn:#f0b84a; --warn-soft:#3a2d12; --bad:#f08a80; --bad-soft:#3d1c19; --ok:#8fce99; --ok-soft:#1d3322; color-scheme:dark}}
+body[data-dept="werkstatt"]{ --accent:#9a4a16; --accent-soft:#f6e4d7; }
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#161a15; --surface:#1f251e; --fg:#e8ece4; --muted:#9aa595; --line:#323a30;
+    --accent:#a3c46b; --accent-fg:#14180f; --accent-soft:#2c3a1d;
+    --warn:#f0b84a; --warn-soft:#3a2d12; --bad:#f08a80; --bad-soft:#3d1c19; --ok:#8fce99; --ok-soft:#1d3322; color-scheme:dark}
+  body[data-dept="werkstatt"]{ --accent:#f0a068; --accent-soft:#3a2416; }
+}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
-.wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:calc(16px + env(safe-area-inset-top));padding-bottom:calc(96px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:16px}
+.wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(96px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:16px}
 h1{font-family:var(--display);font-weight:700;font-size:2rem;margin:0;line-height:1}
 h2{font-family:var(--display);font-weight:700;font-size:1.3rem;margin:0;letter-spacing:.02em}
 .sub{color:var(--muted);margin:4px 0 0;font-size:.95rem}
@@ -44,11 +48,19 @@ button,input,select{font:inherit}
 .btn.small{padding:6px 11px;font-size:.85rem}
 .btn:disabled{opacity:.5}
 input,select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:11px 12px}
-/* bottom tab bar like a native app */
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent);margin:0;flex:none}
+.check{display:flex;gap:10px;align-items:center;font-weight:600}
+/* Abteilungen */
+.deptswitch{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+.deptswitch button{border:0;background:transparent;color:var(--muted);font-weight:700;padding:9px 6px;border-radius:9px;position:relative}
+.deptswitch button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg)}
+.deptswitch .n{margin-left:6px;background:var(--bad);color:#fff;font-size:.7rem;border-radius:999px;padding:1px 7px;font-family:var(--mono)}
+.deptswitch .n:empty{display:none}
+/* Leiste unten */
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-right))}
 .tab{border:0;background:transparent;color:var(--muted);font-weight:700;font-size:.8rem;padding:8px 2px;border-radius:10px;position:relative}
 .tab[aria-selected="true"]{color:var(--accent);background:var(--accent-soft)}
-.tab .n{position:absolute;top:2px;right:18%;background:var(--bad);color:#fff;font-size:.65rem;border-radius:999px;padding:1px 6px;font-family:var(--mono)}
+.tab .n{position:absolute;top:2px;right:14%;background:var(--bad);color:#fff;font-size:.65rem;border-radius:999px;padding:1px 6px;font-family:var(--mono)}
 .tab .n:empty{display:none}
 .alerts{display:flex;flex-direction:column;gap:8px}
 .alert{display:flex;gap:10px;align-items:center;border-radius:10px;padding:10px 12px;background:var(--warn-soft)}
@@ -66,7 +78,7 @@ input,select{width:100%;border:1px solid var(--line);background:var(--surface);c
 .zonehead{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid var(--fg);padding-bottom:4px}
 .count{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
 .row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
-.row .name{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.row .name{font-weight:700;min-width:0;overflow-wrap:anywhere;text-align:left;border:0;background:none;color:var(--fg);padding:0;cursor:pointer}
 .row .side{display:flex;align-items:center;gap:6px;grid-row:span 2}
 .row .info{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
 .linkbtn{border:0;background:none;color:var(--accent);font-weight:700;padding:0;font-size:.85rem;text-decoration:underline}
@@ -82,26 +94,49 @@ input,select{width:100%;border:1px solid var(--line);background:var(--surface);c
 .match{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .match .what{flex:1;min-width:0}
 .setup{display:flex;flex-direction:column;gap:12px}
-.setup .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .filebtn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center}
 .filebtn input{position:absolute;inset:0;opacity:0}
-/* scanner */
-.scanner{position:fixed;inset:0;z-index:20;background:#000;display:flex;flex-direction:column}
-.scanner video{flex:1;width:100%;object-fit:cover;min-height:0}
-.finder{position:absolute;left:8%;right:8%;top:32%;height:22%;border:3px solid #fff;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.45)}
+.divider{border:0;border-top:1px solid var(--line);margin:6px 0}
+/* Bearbeiten */
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheetbox{background:var(--bg);width:100%;max-width:680px;border-radius:16px 16px 0 0;padding:18px max(16px,env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
+/* Scanner */
+.scanner{position:fixed;inset:0;z-index:20;background:#000;color:#fff}
+.scanner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.finder{position:absolute;left:8%;right:8%;top:calc(env(safe-area-inset-top) + 12vh);height:20vh;border:3px solid #fff;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);transition:height .2s,border-color .2s}
 .finder::after{content:"";position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff4b3e}
-.scanbar{position:absolute;left:0;right:0;bottom:0;padding:16px max(16px,env(safe-area-inset-left)) calc(16px + env(safe-area-inset-bottom));display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.scantext{position:absolute;left:0;right:0;top:calc(18% + env(safe-area-inset-top));text-align:center;color:#fff;font-weight:700;padding:0 20px;text-shadow:0 1px 3px #000}
+.finder.date{height:9vh;border-color:#ffd23f}
+.finder.date::after{display:none}
+.finder.flash{border-color:#5fe07a}
+.scantop{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 10px);padding:0 16px;text-align:center;text-shadow:0 1px 3px #000;display:flex;flex-direction:column;gap:2px}
+.scantext{font-weight:700;font-size:1.05rem;overflow-wrap:anywhere}
+.scansub{font-size:.85rem;opacity:.9}
+.scanpanel{position:absolute;left:0;right:0;bottom:0;max-height:60vh;overflow:auto;background:rgba(14,16,14,.9);padding:14px max(16px,env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:10px}
+.scanpanel input,.scanpanel select{background:#232823;color:#fff;border-color:#454d45}
+.scanpanel .label,.scanpanel .hint{color:#b9c2b6}
+.scanbtns{display:flex;gap:8px;flex-wrap:wrap}
+.scanbtns>*{flex:1 1 auto}
+.daterow{display:flex;gap:8px}
+.daterow input{flex:1;min-width:0;font-family:var(--mono);font-size:1.1rem;letter-spacing:.06em}
+.cand{background:#ffd23f;color:#1a1a1a;border-color:#ffd23f}
+.bulklog{display:flex;flex-direction:column;gap:4px;font-size:.88rem}
+.bulklog div{display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid #333a33;padding-top:4px}
+.bulklog span{min-width:0;overflow-wrap:anywhere}
 @media (max-width:420px){.form{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
-<body>
+<body data-dept="vorrat">
 <div class="wrap">
   <header>
-    <h1>Vorratslager</h1>
+    <h1 id="title">Vorratslager</h1>
     <p class="sub" id="sub">Lebensmittel nach Lagerbereich, mit Haltbarkeits-Warnung.</p>
   </header>
+  <div class="deptswitch" id="deptswitch" role="tablist" hidden>
+    <button type="button" role="tab" data-dept="vorrat" id="d-vorrat">Vorratslager<span class="n" id="dn-vorrat"></span></button>
+    <button type="button" role="tab" data-dept="werkstatt" id="d-werkstatt">Werkstatt<span class="n" id="dn-werkstatt"></span></button>
+  </div>
 
   <section id="p-setup" hidden></section>
   <div id="syncline" class="hint" hidden></div>
@@ -109,10 +144,19 @@ input,select{width:100%;border:1px solid var(--line);background:var(--surface);c
 
   <section id="p-stock" hidden>
     <div class="toolbar">
-      <input id="q" type="search" placeholder="Suchen: Name, Produktart, Barcode">
+      <input id="q" type="search" placeholder="Suchen: Name, Art, Barcode">
       <select id="zf"></select>
     </div>
-    <div id="stocklist" style="display:flex;flex-direction:column;gap:22px;margin-top:16px"></div>
+    <p class="hint" style="margin:8px 0 0">Tippe auf einen Namen, um das Produkt zu bearbeiten.</p>
+    <div id="stocklist" style="display:flex;flex-direction:column;gap:22px;margin-top:12px"></div>
+    <div style="margin-top:28px;display:flex;flex-direction:column;gap:6px">
+      <h2>Lagerbereiche</h2>
+      <div id="zonelist"></div>
+      <form id="zoneadd" style="display:flex;gap:8px;margin-top:8px">
+        <input id="zonename" placeholder="Neuer Bereich">
+        <button class="btn" type="submit">Anlegen</button>
+      </form>
+    </div>
     <div style="margin-top:28px;display:flex;flex-direction:column;gap:8px">
       <div class="field"><span class="label">Dein Name (wird bei deinen Einträgen angezeigt)</span><input id="myname" placeholder="z. B. Jonas"></div>
       <button class="btn ghost danger small" id="leavebtn" type="button" style="align-self:flex-start">Haushalt auf diesem Gerät verlassen</button>
@@ -138,17 +182,9 @@ input,select{width:100%;border:1px solid var(--line);background:var(--surface);c
           <button class="btn" id="copybtn" type="button">Link kopieren</button>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <h2>Lagerbereiche</h2>
-        <div id="zonelist"></div>
-        <form id="zoneadd" style="display:flex;gap:8px;margin-top:8px">
-          <input id="zonename" placeholder="Neuer Bereich, z. B. Kellerregal">
-          <button class="btn" type="submit">Anlegen</button>
-        </form>
-      </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <h2>Sicherung</h2>
-        <p class="hint" style="margin:0">Alles wird automatisch für den ganzen Haushalt gespeichert. Die Sicherungsdatei ist ein zusätzlicher Notfall-Export.</p>
+        <p class="hint" style="margin:0">Alles wird automatisch für den ganzen Haushalt gespeichert. Die Sicherungsdatei ist ein zusätzlicher Notfall-Export von Vorratslager und Werkstatt.</p>
         <div class="toolbar">
           <button class="btn" id="exportbtn" type="button">Sicherung speichern</button>
           <label class="btn filebtn">Sicherung laden<input id="importfile" type="file" accept="application/json,.json"></label>
@@ -167,12 +203,22 @@ input,select{width:100%;border:1px solid var(--line);background:var(--surface);c
   </section>
 
   <section id="p-in" hidden>
+    <div class="card">
+      <h2>Großeinkauf</h2>
+      <p class="hint" style="margin:0" id="bulkhint">Alles nacheinander durchscannen, ohne Tippen dazwischen.</p>
+      <label class="check"><input type="checkbox" id="bulkmhd"> MHD per Kamera erfassen</label>
+      <button class="btn primary big" type="button" id="bulkstart">Großeinkauf scannen</button>
+    </div>
+    <div id="in-msg" hidden style="margin-top:12px"></div>
+    <hr class="divider" style="margin:20px 0 14px">
     <form id="inform" class="form">
-      <div class="full"><button class="btn primary big" type="button" data-scan="in">Barcode scannen</button></div>
-      <div id="in-msg" class="full" hidden></div>
-      <div class="field full"><span class="label">Barcode</span><input id="in-code" inputmode="numeric" placeholder="optional, z. B. 4102560010065" autocomplete="off"></div>
-      <div class="field full"><span class="label">Name</span><input id="in-name" required placeholder="z. B. Oliven grün, Dose"></div>
-      <div class="field"><span class="label">Produktart</span><input id="in-cat" list="cats" placeholder="z. B. Konserven"></div>
+      <div class="full" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <h2>Einzeln eintragen</h2>
+        <button class="btn" type="button" data-scan="in">Barcode scannen</button>
+      </div>
+      <div class="field full"><span class="label">Barcode</span><input id="in-code" inputmode="numeric" placeholder="optional" autocomplete="off"></div>
+      <div class="field full"><span class="label">Name</span><input id="in-name" required></div>
+      <div class="field"><span class="label">Art</span><input id="in-cat" list="cats"></div>
       <div class="field"><span class="label">Lagerbereich</span><select id="in-zone" required></select></div>
       <div class="field"><span class="label">Haltbar bis (falls vorhanden)</span><input id="in-exp" type="date"></div>
       <div class="field"><span class="label">Menge</span><input id="in-qty" type="number" min="1" value="1" inputmode="numeric"></div>
@@ -194,38 +240,87 @@ input,select{width:100%;border:1px solid var(--line);background:var(--surface);c
   </section>
 </div>
 
-<nav class="tabs" role="tablist">
+<nav class="tabs" role="tablist" hidden>
   <button class="tab" role="tab" data-tab="warn" id="t-warn">Warnungen<span class="n" id="n-warn"></span></button>
-  <button class="tab" role="tab" data-tab="stock" id="t-stock">Vorrat</button>
+  <button class="tab" role="tab" data-tab="stock" id="t-stock">Bestand</button>
   <button class="tab" role="tab" data-tab="in" id="t-in">Einlagern</button>
   <button class="tab" role="tab" data-tab="out" id="t-out">Entnehmen</button>
 </nav>
 
+<div class="sheet" id="editsheet" hidden>
+  <form class="sheetbox" id="editform">
+    <h2>Produkt bearbeiten</h2>
+    <div class="field"><span class="label">Name</span><input id="e-name" required></div>
+    <div class="field"><span class="label">Art</span><input id="e-cat" list="cats"></div>
+    <div class="field"><span class="label">Lagerbereich</span><select id="e-zone"></select></div>
+    <div class="form">
+      <div class="field"><span class="label">Haltbar bis</span><input id="e-exp" type="date"></div>
+      <div class="field"><span class="label">Menge</span><input id="e-qty" type="number" min="1" inputmode="numeric"></div>
+    </div>
+    <p class="hint" style="margin:0" id="e-info"></p>
+    <div class="toolbar">
+      <button class="btn primary" type="submit">Speichern</button>
+      <button class="btn" type="button" id="e-cancel">Abbrechen</button>
+    </div>
+    <button class="btn ghost danger small" type="button" id="e-del" style="align-self:flex-start">Produkt löschen</button>
+  </form>
+</div>
+
 <div class="scanner" id="scanner" hidden>
   <video id="video" playsinline muted></video>
-  <div class="finder"></div>
-  <div class="scantext" id="scantext">Barcode in den Rahmen halten</div>
-  <div class="scanbar">
-    <button class="btn" id="torchbtn" type="button" hidden>Licht</button>
-    <label class="btn filebtn">Foto statt Live<input id="photofile" type="file" accept="image/*" capture="environment"></label>
-    <button class="btn primary" id="scanclose" type="button">Abbrechen</button>
+  <div class="finder" id="finder"></div>
+  <div class="scantop"><div class="scantext" id="scantext"></div><div class="scansub" id="scansub"></div></div>
+  <div class="scanpanel">
+    <div id="bulkbox" hidden style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="bulkzone" aria-label="Lagerbereich" style="flex:1;min-width:0"></select>
+        <span id="bulkcount" class="count" style="color:#fff;white-space:nowrap"></span>
+      </div>
+      <div id="bulkstep" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div id="bulklog" class="bulklog"></div>
+    </div>
+    <div class="scanbtns">
+      <button class="btn" id="torchbtn" type="button" hidden>Licht</button>
+      <button class="btn" id="soundbtn" type="button">Ton an</button>
+      <label class="btn filebtn" id="photobtn">Foto statt Live<input id="photofile" type="file" accept="image/*" capture="environment"></label>
+      <button class="btn primary" id="scanclose" type="button">Abbrechen</button>
+    </div>
   </div>
 </div>
 
-<datalist id="cats">
-  <option value="Konserven"><option value="Nudeln & Reis"><option value="Mehl & Backen"><option value="Gewürze & Öle">
-  <option value="Getränke"><option value="Snacks & Süßes"><option value="Frühstück"><option value="Milchprodukte">
-  <option value="Tiefkühl"><option value="Saucen & Aufstriche"><option value="Sonstiges">
-</datalist>
+<datalist id="cats"></datalist>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="config.js"></script>
 <script src="ean.js"></script>
+<script src="mhd.js"></script>
 <script>
 const WARN_DAYS = 7, CRIT_DAYS = 2, KEY = "vorratslager-v2";
-const S = { zones:[], items:[], products:{}, tab:"warn", hid:null, hhName:"", ready:false, isAdmin:false, adminSet:false };
+const TESS_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+const DEPTS = {
+  vorrat: { label:"Vorratslager", prefix:"", color:"#4f6b2a", mhd:true,
+    tagline:"Lebensmittel nach Lagerbereich, mit Haltbarkeits-Warnung.",
+    namePh:"z. B. Oliven grün, Dose", catPh:"z. B. Konserven", zonePh:"Neuer Bereich, z. B. Kellerregal",
+    cats:["Konserven","Nudeln & Reis","Mehl & Backen","Gewürze & Öle","Getränke","Snacks & Süßes","Frühstück","Milchprodukte","Tiefkühl","Saucen & Aufstriche","Sonstiges"],
+    sources:["https://world.openfoodfacts.org"],
+    catMap:[["canned","Konserven"],["pasta","Nudeln & Reis"],["rice","Nudeln & Reis"],["flour","Mehl & Backen"],["baking","Mehl & Backen"],
+      ["spice","Gewürze & Öle"],["oil","Gewürze & Öle"],["water","Getränke"],["beverage","Getränke"],["drink","Getränke"],["snack","Snacks & Süßes"],
+      ["sweet","Snacks & Süßes"],["chocolate","Snacks & Süßes"],["breakfast","Frühstück"],["cereal","Frühstück"],["dair","Milchprodukte"],["cheese","Milchprodukte"],
+      ["frozen","Tiefkühl"],["sauce","Saucen & Aufstriche"],["spread","Saucen & Aufstriche"],["condiment","Saucen & Aufstriche"]] },
+  werkstatt: { label:"Werkstatt", prefix:"werkstatt_", color:"#9a4a16", mhd:false,
+    tagline:"Werkzeug und Material nach Lagerbereich.",
+    namePh:"z. B. Holzschrauben 4×40, 200 Stk.", catPh:"z. B. Schrauben & Dübel", zonePh:"Neuer Bereich, z. B. Regal links",
+    cats:["Schrauben & Dübel","Nägel & Beschläge","Werkzeug","Elektro","Batterien","Farben & Lacke","Kleber & Dichtstoffe","Schleifen & Trennen","Holz","Sanitär","Reinigung","Sonstiges"],
+    sources:["https://world.openproductsfacts.org"],
+    catMap:[["batter","Batterien"],["glue","Kleber & Dichtstoffe"],["adhesive","Kleber & Dichtstoffe"],["sealant","Kleber & Dichtstoffe"],["paint","Farben & Lacke"],
+      ["varnish","Farben & Lacke"],["screw","Schrauben & Dübel"],["tool","Werkzeug"],["lamp","Elektro"],["bulb","Elektro"],["electric","Elektro"],["clean","Reinigung"],["deterg","Reinigung"]] }
+};
+const S = { dept:"vorrat", d:{vorrat:{zones:[],items:[],products:{}}, werkstatt:{zones:[],items:[],products:{}}},
+            tab:"warn", hid:null, hhName:"", ready:false, isAdmin:false, adminSet:false };
+const D = () => S.d[S.dept];
+const DP = () => DEPTS[S.dept];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36);
@@ -239,6 +334,8 @@ const secretRef = () => col("secret").doc("admin");
 /* ---------- Firebase ---------- */
 let fs=null, unsubs=[];
 const col = name => fs.collection("households").doc(S.hid).collection(name);
+const colOf = (dept,name) => col(DEPTS[dept].prefix + name);
+const colC = name => colOf(S.dept, name);
 const inc = n => firebase.firestore.FieldValue.increment(n);
 async function initFirebase(){
   if(!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.apiKey || String(window.FIREBASE_CONFIG.apiKey).includes("HIER")) throw new Error("config");
@@ -246,7 +343,6 @@ async function initFirebase(){
   firebase.initializeApp(window.FIREBASE_CONFIG);
   fs=firebase.firestore();
   try{ await fs.enablePersistence({synchronizeTabs:true}); }catch(_){}
-  // Bereits angemeldet (auch offline) → weiter; sonst einmal anonym anmelden.
   await new Promise((res,rej)=>{
     const off=firebase.auth().onAuthStateChanged(u=>{
       off();
@@ -256,21 +352,24 @@ async function initFirebase(){
 }
 function subscribe(){
   unsubs.forEach(u=>u()); unsubs=[]; S.ready=false;
-  const sync=(name,fn)=>unsubs.push(col(name).onSnapshot({includeMetadataChanges:true},snap=>{
-    fn(snap.docs.map(d=>({id:d.id,...d.data()})));
-    S.ready=true; setSync(snap.metadata.hasPendingWrites?"Wird synchronisiert …":(snap.metadata.fromCache?"Offline: Änderungen werden später übertragen.":""));
-    render();
-  },err=>setSync("Kein Zugriff auf den Haushalt. Stimmt der Einladungslink?",true)));
-  sync("zones",a=>S.zones=a);
-  sync("items",a=>{ S.items=a; a.filter(i=>(i.qty||0)<=0).forEach(i=>col("items").doc(i.id).delete().catch(()=>{})); S.items=a.filter(i=>(i.qty||0)>0); });
-  sync("products",a=>{ S.products={}; a.forEach(({id,...r})=>S.products[id]=r); });
+  for(const dept of Object.keys(DEPTS)){
+    const data=S.d[dept];
+    const sync=(name,fn)=>unsubs.push(colOf(dept,name).onSnapshot({includeMetadataChanges:true},snap=>{
+      fn(snap.docs.map(d=>({id:d.id,...d.data()})));
+      S.ready=true; setSync(snap.metadata.hasPendingWrites?"Wird synchronisiert …":(snap.metadata.fromCache?"Offline: Änderungen werden später übertragen.":""));
+      render(); if(B.on) renderBulkZones();
+    },err=>setSync(err.code==="permission-denied"?"Kein Zugriff. Sind die neuen Firestore-Regeln veröffentlicht und stimmt der Einladungslink?":"Verbindung zum Haushalt unterbrochen.",true)));
+    sync("zones",a=>data.zones=a);
+    sync("items",a=>{ a.filter(i=>(i.qty||0)<=0).forEach(i=>colOf(dept,"items").doc(i.id).delete().catch(()=>{})); data.items=a.filter(i=>(i.qty||0)>0); });
+    sync("products",a=>{ data.products={}; a.forEach(({id,...r})=>data.products[id]=r); });
+  }
   unsubs.push(fs.collection("households").doc(S.hid).onSnapshot(d=>{ const x=d.data()||{}; S.hhName=x.name||""; S.adminSet=!!x.adminSet; render(); },()=>{}));
   unsubs.push(col("admins").doc(myUid()).onSnapshot(d=>{ S.isAdmin=d.exists; render(); },()=>{ S.isAdmin=false; render(); }));
 }
 function setSync(t,err){ const el=$("syncline"); el.hidden=!t; el.textContent=t||""; el.style.color=err?"var(--bad)":""; }
 const write = p => p.catch(e=>setSync("Speichern fehlgeschlagen: "+(e.code==="permission-denied"?"keine Berechtigung.":"bitte nochmal versuchen."),true));
 
-/* ---------- dates ---------- */
+/* ---------- Datum ---------- */
 function today(){ const d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
 function isoOf(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 function daysLeft(iso){ if(!iso) return null; const [y,m,d]=iso.split("-").map(Number); return Math.round((new Date(y,m-1,d)-today())/86400000); }
@@ -284,18 +383,18 @@ function status(iso){
   if(n<=WARN_DAYS) return {cls:"warn",txt:`noch ${n} T`,n};
   return {cls:"ok",txt:fmtDate(iso),n};
 }
-const zoneName = id => (S.zones.find(z=>z.id===id)||{}).name || "Ohne Bereich";
-const sortedZones = () => [...S.zones].sort((a,b)=>(a.order??0)-(b.order??0) || a.name.localeCompare(b.name,"de",{numeric:true}));
-const alertsList = () => S.items.map(i=>({i,s:status(i.expiry)})).filter(x=>x.s.n<=WARN_DAYS).sort((a,b)=>a.s.n-b.s.n);
+const zoneName = id => (D().zones.find(z=>z.id===id)||{}).name || "Ohne Bereich";
+const sortedZones = () => [...D().zones].sort((a,b)=>(a.order??0)-(b.order??0) || a.name.localeCompare(b.name,"de",{numeric:true}));
+const alertsOf = dept => S.d[dept].items.map(i=>({i,s:status(i.expiry),dept})).filter(x=>x.s.n<=WARN_DAYS).sort((a,b)=>a.s.n-b.s.n);
 const inviteLink = () => location.origin + location.pathname + "?h=" + S.hid;
 
-/* ---------- setup screens ---------- */
+/* ---------- Einrichtung ---------- */
 function renderSetup(kind,detail){
   const p=$("p-setup"); p.hidden=false;
   for(const t of ["warn","stock","in","out","admin"]) $("p-"+t).hidden=true;
-  document.querySelector(".tabs").hidden=true;
+  document.querySelector(".tabs").hidden=true; $("deptswitch").hidden=true;
   if(kind==="config"){ p.innerHTML=`<div class="setup"><div class="card"><h2>Einrichtung fehlt noch</h2>
-    <p style="margin:0">In der Datei <b>config.js</b> fehlen die Zugangsdaten deines Firebase-Projekts. Schritt 1 bis 3 der Anleitung erklären, wo du sie findest.</p></div></div>`; return; }
+    <p style="margin:0">In der Datei <b>config.js</b> fehlen die Zugangsdaten deines Firebase-Projekts. Die Anleitung erklärt, wo du sie findest.</p></div></div>`; return; }
   if(kind==="error"){ p.innerHTML=`<div class="setup"><div class="card"><h2>Verbindung fehlgeschlagen</h2>
     <p style="margin:0">${esc(detail)}</p><button class="btn primary" type="button" onclick="location.reload()">Nochmal versuchen</button></div></div>`; return; }
   p.innerHTML=`<div class="setup">
@@ -304,7 +403,7 @@ function renderSetup(kind,detail){
       <p class="hint" style="margin:0">Für die erste Person. Danach schickst du den Einladungslink an deine Mitbewohner.</p>
       <input id="setup-hh" placeholder="Name, z. B. WG Sanderstraße">
       <input id="setup-code" placeholder="Admin-Code festlegen (mind. 3 Zeichen)" autocomplete="off">
-      <p class="hint" style="margin:0">Mit dem Admin-Code verwaltest du Lagerbereiche, Einladungslink und Sicherung, auch von einem zweiten Gerät aus.</p>
+      <p class="hint" style="margin:0">Mit dem Admin-Code verwaltest du Einladungslink und Sicherung, auch von einem zweiten Gerät aus.</p>
       <button class="btn primary" id="setup-create" type="button">Haushalt anlegen</button></div>
     <div class="card"><h2>Haushalt beitreten</h2>
       <p class="hint" style="margin:0">Öffne einfach den Einladungslink, den du bekommen hast. Oder füge ihn hier ein.</p>
@@ -314,8 +413,12 @@ function renderSetup(kind,detail){
 }
 function enterHousehold(hid){
   S.hid=hid; lsSet("hid",hid);
-  $("p-setup").hidden=true; document.querySelector(".tabs").hidden=false;
+  $("p-setup").hidden=true; document.querySelector(".tabs").hidden=false; $("deptswitch").hidden=false;
   subscribe(); render();
+}
+function seedZones(b, dept){
+  if(dept==="werkstatt") [1,2,3].forEach(k=>b.set(colOf("werkstatt","zones").doc("wz"+k),{name:"Regal "+k,order:k}));
+  else [1,2,3,4].forEach(k=>b.set(colOf("vorrat","zones").doc("z"+k),{name:"Bereich "+k,order:k}));
 }
 document.addEventListener("click",async e=>{
   const t=e.target.closest("button"); if(!t) return;
@@ -329,7 +432,7 @@ document.addEventListener("click",async e=>{
       b.set(secretRef(),{code});
       b.set(col("admins").doc(myUid()),{code});
       b.set(fs.collection("households").doc(hid),{name:$("setup-hh").value.trim()||"Unser Haushalt",adminSet:true,created:firebase.firestore.FieldValue.serverTimestamp()});
-      [1,2,3,4].forEach(k=>b.set(col("zones").doc("z"+k),{name:"Bereich "+k,order:k}));
+      seedZones(b,"vorrat"); seedZones(b,"werkstatt");
       await b.commit();
       enterHousehold(hid); S.tab="stock"; render();
     }catch(err){ t.disabled=false; showMsg($("setup-msg"),"Anlegen fehlgeschlagen. Sind die Firestore-Regeln aus der Anleitung veröffentlicht und ist die anonyme Anmeldung aktiv?",true); }
@@ -343,21 +446,36 @@ document.addEventListener("click",async e=>{
   }
 });
 
-/* ---------- render ---------- */
+/* ---------- Anzeige ---------- */
+function setDept(dept){
+  if(!DEPTS[dept] || dept===S.dept) return;
+  S.dept=dept; lsSet("dept",dept);
+  $("q").value=""; $("zf").value=""; $("out-code").value=""; $("out-msg").hidden=true; $("in-msg").hidden=true; $("inform").reset();
+  render(); window.scrollTo(0,0);
+}
 function render(){
   if(!S.hid) return;
-  const alerts=alertsList();
+  const P=DP();
+  document.body.dataset.dept=S.dept; $("themecolor").content=P.color;
+  $("title").textContent=P.label;
+  $("sub").textContent = S.hhName ? `${S.hhName}${myName()?" · "+myName():""}` : P.tagline;
+  for(const k of Object.keys(DEPTS)){ $("d-"+k).setAttribute("aria-selected", S.dept===k); $("dn-"+k).textContent = alertsOf(k).filter(x=>x.s.cls==="bad").length || ""; }
+  const alerts=alertsOf(S.dept);
   $("n-warn").textContent = alerts.length || "";
   for(const t of ["warn","stock","in","out","admin"]){ $("p-"+t).hidden = S.tab!==t; const tb=$("t-"+t); if(tb) tb.setAttribute("aria-selected", S.tab===t || (t==="stock"&&S.tab==="admin")); }
-  $("sub").textContent = S.hhName ? `${S.hhName}${myName()?" · "+myName():""}` : "Lebensmittel nach Lagerbereich, mit Haltbarkeits-Warnung.";
-  renderWarn(alerts); renderStock(); renderZoneSelects(); renderOut(); renderHousehold(); renderAdmin();
+  if($("cats").dataset.dept!==S.dept){
+    $("cats").dataset.dept=S.dept; $("cats").innerHTML=P.cats.map(c=>`<option value="${esc(c)}">`).join("");
+    $("in-name").placeholder=P.namePh; $("in-cat").placeholder=P.catPh; $("zonename").placeholder=P.zonePh;
+    const pref=lsGet("mhd-"+S.dept); $("bulkmhd").checked = pref===null ? P.mhd : pref==="1";
+  }
+  renderWarn(alerts); renderStock(); renderZoneSelects(); renderZones(); renderOut(); renderHousehold(); renderAdmin();
 }
 function renderAdmin(){
   $("admin-panel").hidden=!S.isAdmin; $("admin-lock").hidden=S.isAdmin;
-  if(S.isAdmin){ renderZones(); if(document.activeElement!==$("hhname")) $("hhname").value=S.hhName; return; }
+  if(S.isAdmin){ if(document.activeElement!==$("hhname")) $("hhname").value=S.hhName; return; }
   const lock=$("admin-lock"); if(lock.contains(document.activeElement)) return;
   lock.innerHTML = S.adminSet
-    ? `<div class="card"><p style="margin:0">Hier verwaltest du Lagerbereiche, Einladungslink und Sicherung. Bitte Admin-Code eingeben.</p>
+    ? `<div class="card"><p style="margin:0">Hier verwaltest du Einladungslink, Haushaltsname und Sicherung. Bitte Admin-Code eingeben.</p>
        <form id="unlockform" style="display:flex;gap:8px"><input id="unlockcode" type="password" placeholder="Admin-Code" autocomplete="current-password"><button class="btn primary" type="submit">Entsperren</button></form>
        <div id="unlock-msg" hidden></div></div>`
     : `<div class="card"><p style="margin:0">Für diesen Haushalt gibt es noch keinen Admin. Wer jetzt einen Code festlegt, wird Admin.</p>
@@ -385,12 +503,12 @@ function renderHousehold(){
   if(document.activeElement!==$("myname")) $("myname").value = myName();
 }
 function renderWarn(alerts){
-  const p=$("p-warn");
-  if(!S.ready){ p.innerHTML=`<div class="empty">Vorrat wird geladen …</div>`; return; }
+  const p=$("p-warn"), items=D().items;
+  if(!S.ready){ p.innerHTML=`<div class="empty">Wird geladen …</div>`; return; }
   const notif = ("Notification" in window) ? Notification.permission : "unsupported";
   const notifBlock = notif==="default" ? `<button class="btn" id="notifbtn" type="button" style="margin-top:12px">Benachrichtigungen einschalten</button>
      <p class="hint">Die App meldet sich dann beim Öffnen, wenn etwas bald abläuft. Für Erinnerungen ohne die App: „Erinnerung“ beim Produkt tippen, das legt einen Kalendertermin an.</p>` : "";
-  if(!S.items.length){ p.innerHTML=`<div class="empty">Noch nichts eingelagert. Unten auf <b>Einlagern</b> tippen und den ersten Barcode scannen. Mitbewohner lädst du unter <b>Vorrat → Admin</b> ein.</div>`+notifBlock; return; }
+  if(!items.length){ p.innerHTML=`<div class="empty">Hier ist noch nichts eingelagert. Unten auf <b>Einlagern</b> tippen und loslegen.</div>`+notifBlock; return; }
   if(!alerts.length){ p.innerHTML=`<div class="okline">Alles im grünen Bereich: nichts läuft in den nächsten ${WARN_DAYS} Tagen ab.</div>`+notifBlock; return; }
   p.innerHTML = `<div class="alerts">${alerts.map(({i,s})=>`
     <div class="alert ${s.cls==="bad"?"bad":""}">
@@ -402,19 +520,20 @@ function renderWarn(alerts){
     <p class="hint">Rot: abgelaufen oder höchstens ${CRIT_DAYS} Tage. Gelb: innerhalb von ${WARN_DAYS} Tagen.</p>`+notifBlock;
 }
 function renderStock(){
-  const q=$("q").value.trim().toLowerCase(), zf=$("zf").value, list=$("stocklist");
-  const items=S.items.filter(i=>(!zf||i.zoneId===zf) && (!q || [i.name,i.category,i.barcode].join(" ").toLowerCase().includes(q)));
+  const q=$("q").value.trim().toLowerCase(), zf=$("zf").value, list=$("stocklist"), all=D().items;
+  const items=all.filter(i=>(!zf||i.zoneId===zf) && (!q || [i.name,i.category,i.barcode].join(" ").toLowerCase().includes(q)));
   const groups=sortedZones().map(z=>({z,items:items.filter(i=>i.zoneId===z.id)}));
-  const orphan=items.filter(i=>!S.zones.some(z=>z.id===i.zoneId));
+  const orphan=items.filter(i=>!D().zones.some(z=>z.id===i.zoneId));
   if(orphan.length) groups.push({z:{id:"",name:"Ohne Bereich"},items:orphan});
   const shown=groups.filter(g=>g.items.length || (!q && (!zf||g.z.id===zf)));
-  if(!shown.length){ list.innerHTML=`<div class="empty">Keine Treffer.</div>`; return; }
+  if(!shown.length){ list.innerHTML = D().zones.length||q ? `<div class="empty">Keine Treffer.</div>`
+    : `<div class="empty">Noch keine Lagerbereiche. Lege unten einen an oder <button class="linkbtn" id="seedzones" type="button">Standardbereiche anlegen</button>.</div>`; return; }
   list.innerHTML = shown.map(({z,items})=>`
     <div class="zone">
       <div class="zonehead"><h2>${esc(z.name)}</h2><span class="count">${items.reduce((a,i)=>a+(i.qty||1),0)} Stk.</span></div>
-      ${items.length ? items.sort((a,b)=>status(a.expiry).n-status(b.expiry).n).map(i=>{const s=status(i.expiry);return `
+      ${items.length ? items.sort((a,b)=>status(a.expiry).n-status(b.expiry).n || a.name.localeCompare(b.name,"de")).map(i=>{const s=status(i.expiry);return `
         <div class="row">
-          <div class="name">${esc(i.name)}</div>
+          <button class="name" type="button" data-edit="${i.id}">${esc(i.name)}</button>
           <div class="side">
             <button class="btn small" data-dec="${i.id}" aria-label="Eins verbraucht">−</button>
             <span class="qty">${i.qty||1}</span>
@@ -426,25 +545,26 @@ function renderStock(){
         </div>`}).join("") : `<div class="empty">Leer.</div>`}
     </div>`).join("");
 }
+function zoneOptions(){ return sortedZones().map(z=>`<option value="${z.id}">${esc(z.name)}</option>`).join(""); }
 function renderZoneSelects(){
-  const opts=sortedZones().map(z=>`<option value="${z.id}">${esc(z.name)}</option>`).join("");
-  const zf=$("zf"), cur=zf.value; zf.innerHTML=`<option value="">Alle Bereiche</option>`+opts; zf.value=cur;
-  const iz=$("in-zone"), cz=iz.value; iz.innerHTML=opts || `<option value="">Erst einen Bereich anlegen</option>`; if(cz && S.zones.some(z=>z.id===cz)) iz.value=cz;
+  const opts=zoneOptions();
+  const zf=$("zf"), cur=zf.value; zf.innerHTML=`<option value="">Alle Bereiche</option>`+opts; zf.value=D().zones.some(z=>z.id===cur)?cur:"";
+  const iz=$("in-zone"), cz=iz.value; iz.innerHTML=opts || `<option value="">Erst einen Bereich anlegen</option>`; if(cz && D().zones.some(z=>z.id===cz)) iz.value=cz;
 }
 function renderZones(){
   const el=$("zonelist"); if(el.contains(document.activeElement)) return;
-  el.innerHTML = sortedZones().map(z=>{const n=S.items.filter(i=>i.zoneId===z.id).length; return `
+  el.innerHTML = sortedZones().map(z=>{const n=D().items.filter(i=>i.zoneId===z.id).length; return `
     <div class="zonerow">
       <input value="${esc(z.name)}" data-zone="${z.id}" aria-label="Name des Bereichs">
       <span class="count">${n} Pos.</span>
-      <button class="btn small danger" data-delzone="${z.id}" ${n?"disabled":""}>Löschen</button>
+      <button class="btn small danger" data-delzone="${z.id}" ${n?"disabled title='Bereich ist nicht leer'":""}>Löschen</button>
     </div>`}).join("") || `<div class="empty">Noch keine Bereiche.</div>`;
 }
 function renderOut(){
   const q=$("out-code").value.trim().toLowerCase(), list=$("out-list");
   if(!q){ list.innerHTML=`<div class="empty">Scannen oder Namen tippen. Das Produkt wird um eins reduziert, bei null entfernt.</div>`; return; }
-  const m=S.items.filter(i=>(i.barcode||"")===q || i.name.toLowerCase().includes(q)).sort((a,b)=>status(a.expiry).n-status(b.expiry).n);
-  if(!m.length){ list.innerHTML=`<div class="empty">Nichts im Vorrat gefunden.</div>`; return; }
+  const m=D().items.filter(i=>(i.barcode||"")===q || i.name.toLowerCase().includes(q)).sort((a,b)=>status(a.expiry).n-status(b.expiry).n);
+  if(!m.length){ list.innerHTML=`<div class="empty">Nichts im Bestand gefunden.</div>`; return; }
   list.innerHTML = m.map(i=>{const s=status(i.expiry);return `
     <div class="match"><div class="what"><strong>${esc(i.name)}</strong> <span class="qty">×${i.qty||1}</span><br>
       <span class="hint">${esc(zoneName(i.zoneId))}</span> <span class="pill ${s.cls}">${s.txt}</span></div>
@@ -454,22 +574,27 @@ function renderOut(){
 function showMsg(el,text,err){ el.hidden=false; el.className="msg"+(err?" err":""); el.textContent=text; }
 function alertMsg(t){ showMsg($("in-msg"),t,true); }
 
-/* ---------- actions ---------- */
+/* ---------- Aktionen ---------- */
 function changeQty(id,delta){
-  const it=S.items.find(i=>i.id===id); if(!it) return;
+  const it=D().items.find(i=>i.id===id); if(!it) return;
   if(navigator.vibrate) navigator.vibrate(30);
-  if((it.qty||1)+delta<=0) write(col("items").doc(id).delete());
-  else write(col("items").doc(id).update({qty:inc(delta)}));
+  if((it.qty||1)+delta<=0) write(colC("items").doc(id).delete());
+  else write(colC("items").doc(id).update({qty:inc(delta)}));
 }
 document.addEventListener("click",e=>{
   const t=e.target.closest("button"); if(!t) return;
+  if(t.dataset.dept) return setDept(t.dataset.dept);
   if(t.dataset.tab){ S.tab=t.dataset.tab; render(); window.scrollTo(0,0); return; }
   if(t.dataset.use) return changeQty(t.dataset.use,-1);
   if(t.dataset.dec) return changeQty(t.dataset.dec,-1);
   if(t.dataset.inc) return changeQty(t.dataset.inc,+1);
-  if(t.dataset.delzone) return write(col("zones").doc(t.dataset.delzone).delete());
-  if(t.dataset.ics) return downloadIcs(S.items.find(i=>i.id===t.dataset.ics));
+  if(t.dataset.edit) return openEdit(t.dataset.edit);
+  if(t.dataset.delzone) return write(colC("zones").doc(t.dataset.delzone).delete());
+  if(t.dataset.ics) return downloadIcs(D().items.find(i=>i.id===t.dataset.ics));
   if(t.dataset.scan) return openScanner(t.dataset.scan);
+  if(t.dataset.undo) return undoBulk(+t.dataset.undo);
+  if(t.id==="bulkstart") return openScanner("bulk");
+  if(t.id==="seedzones"){ const b=fs.batch(); seedZones(b,S.dept); return write(b.commit()); }
   if(t.id==="notifbtn") return Notification.requestPermission().then(()=>{ render(); notifyIfNeeded(true); });
   if(t.id==="sharebtn" && navigator.share){
     return navigator.share({title:"Vorratslager",text:`Tritt unserem Vorratslager „${S.hhName}“ bei:`,url:inviteLink()}).catch(()=>{});
@@ -482,72 +607,278 @@ document.addEventListener("click",e=>{
   if(t.id==="leavebtn"){ $("leaveconfirm").hidden=false; }
   if(t.id==="leaveno"){ $("leaveconfirm").hidden=true; }
   if(t.id==="adminlogout"){ return write(col("admins").doc(myUid()).delete()); }
-  if(t.id==="leaveyes"){ unsubs.forEach(u=>u()); unsubs=[]; lsSet("hid",null); S.hid=null; S.items=[]; S.zones=[]; S.isAdmin=false; S.adminSet=false; S.tab="warn"; $("leaveconfirm").hidden=true; renderSetup("start"); }
+  if(t.id==="leaveyes"){
+    unsubs.forEach(u=>u()); unsubs=[]; lsSet("hid",null); S.hid=null;
+    for(const k of Object.keys(S.d)) S.d[k]={zones:[],items:[],products:{}};
+    S.isAdmin=false; S.adminSet=false; S.tab="warn"; $("leaveconfirm").hidden=true; renderSetup("start");
+  }
 });
 $("hhname").addEventListener("change",e=>{ const v=e.target.value.trim(); if(v) write(fs.collection("households").doc(S.hid).update({name:v})); });
 $("myname").addEventListener("change",e=>{ lsSet("name",e.target.value.trim()||null); render(); });
 $("zonelist").addEventListener("change",e=>{
   const id=e.target.dataset.zone, v=e.target.value.trim();
-  if(id && v) write(col("zones").doc(id).update({name:v}));
+  if(id && v) write(colC("zones").doc(id).update({name:v}));
 });
 $("zoneadd").addEventListener("submit",e=>{
   e.preventDefault(); const v=$("zonename").value.trim(); if(!v) return;
-  write(col("zones").doc(uid()).set({name:v,order:Math.max(0,...S.zones.map(z=>z.order||0))+1})); $("zonename").value="";
+  write(colC("zones").doc(uid()).set({name:v,order:Math.max(0,...D().zones.map(z=>z.order||0))+1})); $("zonename").value="";
 });
+$("bulkmhd").addEventListener("change",e=>lsSet("mhd-"+S.dept,e.target.checked?"1":"0"));
 $("q").addEventListener("input",renderStock); $("zf").addEventListener("change",renderStock);
 $("out-code").addEventListener("input",renderOut);
 
-/* product lookup: household memory first, then Open Food Facts */
-const CAT_MAP=[["canned","Konserven"],["pasta","Nudeln & Reis"],["rice","Nudeln & Reis"],["flour","Mehl & Backen"],["baking","Mehl & Backen"],
-  ["spice","Gewürze & Öle"],["oil","Gewürze & Öle"],["water","Getränke"],["beverage","Getränke"],["drink","Getränke"],["snack","Snacks & Süßes"],
-  ["sweet","Snacks & Süßes"],["chocolate","Snacks & Süßes"],["breakfast","Frühstück"],["cereal","Frühstück"],["dair","Milchprodukte"],["cheese","Milchprodukte"],
-  ["frozen","Tiefkühl"],["sauce","Saucen & Aufstriche"],["spread","Saucen & Aufstriche"],["condiment","Saucen & Aufstriche"]];
-async function lookup(code){
-  if(S.products[code]) return {...S.products[code], known:true};
-  try{
-    const ctl=new AbortController(); setTimeout(()=>ctl.abort(),6000);
-    const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,product_name_de,brands,quantity,categories_tags`,{signal:ctl.signal});
-    const d=await r.json(); if(d.status!==1||!d.product) return null;
-    const p=d.product, base=(p.product_name_de||p.product_name||"").trim(); if(!base) return null;
-    const brand=(p.brands||"").split(",")[0].trim();
-    const name=[brand && !base.toLowerCase().includes(brand.toLowerCase())?brand:"",base,p.quantity||""].filter(Boolean).join(" ");
-    const tags=(p.categories_tags||[]).join(" ");
-    return {name,category:(CAT_MAP.find(([k])=>tags.includes(k))||[])[1]||""};
-  }catch(_){ return null; }
+/* ---------- Produkt bearbeiten ---------- */
+let editId=null, delArmed=false;
+function openEdit(id){
+  const it=D().items.find(i=>i.id===id); if(!it) return;
+  editId=id; delArmed=false; $("e-del").textContent="Produkt löschen";
+  $("e-name").value=it.name||""; $("e-cat").value=it.category||""; $("e-exp").value=it.expiry||""; $("e-qty").value=it.qty||1;
+  $("e-zone").innerHTML=zoneOptions(); $("e-zone").value=it.zoneId;
+  $("e-info").textContent=[it.barcode?`Barcode ${it.barcode}`:"", it.addedBy?`eingelagert von ${it.addedBy}`:"", it.added?`am ${fmtDate(it.added)}`:""].filter(Boolean).join(" · ");
+  $("editsheet").hidden=false;
+}
+function closeEdit(){ $("editsheet").hidden=true; editId=null; }
+$("e-cancel").addEventListener("click",closeEdit);
+$("editsheet").addEventListener("click",e=>{ if(e.target.id==="editsheet") closeEdit(); });
+$("e-del").addEventListener("click",()=>{
+  if(!delArmed){ delArmed=true; $("e-del").textContent="Wirklich löschen? Nochmal tippen"; return; }
+  write(colC("items").doc(editId).delete()); closeEdit();
+});
+$("editform").addEventListener("submit",e=>{
+  e.preventDefault(); const it=D().items.find(i=>i.id===editId); if(!it) return closeEdit();
+  const upd={name:$("e-name").value.trim()||it.name, category:$("e-cat").value.trim(), zoneId:$("e-zone").value||it.zoneId,
+             expiry:$("e-exp").value||"", qty:Math.max(1,parseInt($("e-qty").value)||1)};
+  write(colC("items").doc(editId).update(upd));
+  if(it.barcode && /^[0-9]{6,14}$/.test(it.barcode)) write(colC("products").doc(it.barcode).set({name:upd.name,category:upd.category,zoneId:upd.zoneId}));
+  closeEdit();
+});
+
+/* ---------- Produktsuche: erst Haushalt, dann offene Datenbank ---------- */
+const lookupCache={};
+async function lookup(code, dept){
+  dept=dept||S.dept;
+  const known=S.d[dept].products[code]; if(known) return {...known, known:true};
+  const ck=dept+":"+code; if(ck in lookupCache) return lookupCache[ck];
+  const P=DEPTS[dept];
+  for(const base of P.sources){
+    try{
+      const ctl=new AbortController(); setTimeout(()=>ctl.abort(),6000);
+      const r=await fetch(`${base}/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,product_name_de,brands,quantity,categories_tags`,{signal:ctl.signal});
+      const d=await r.json(); if(d.status!==1||!d.product) continue;
+      const p=d.product, name0=(p.product_name_de||p.product_name||"").trim(); if(!name0) continue;
+      const brand=(p.brands||"").split(",")[0].trim();
+      const name=[brand && !name0.toLowerCase().includes(brand.toLowerCase())?brand:"",name0,p.quantity||""].filter(Boolean).join(" ");
+      const tags=(p.categories_tags||[]).join(" ");
+      return lookupCache[ck]={name,category:(P.catMap.find(([k])=>tags.includes(k))||[])[1]||""};
+    }catch(_){}
+  }
+  return lookupCache[ck]=null;
 }
 async function applyCode(code){
   $("in-code").value=code;
   showMsg($("in-msg"),`Barcode ${code} erkannt, suche Produkt …`);
   const p=await lookup(code);
   if(p){ $("in-name").value=p.name||""; if(p.category) $("in-cat").value=p.category;
-    if(p.zoneId && S.zones.some(z=>z.id===p.zoneId)) $("in-zone").value=p.zoneId;
-    showMsg($("in-msg"), p.known?`Bekannt: ${p.name}. Nur noch Haltbarkeit prüfen.`:`Gefunden: ${p.name}. Name kurz prüfen, Haltbarkeit eintragen.`);
+    if(p.zoneId && D().zones.some(z=>z.id===p.zoneId)) $("in-zone").value=p.zoneId;
+    showMsg($("in-msg"), p.known?`Bekannt: ${p.name}.`:`Gefunden: ${p.name}. Name kurz prüfen.`);
     $("in-exp").focus(); }
   else { showMsg($("in-msg"),`Barcode ${code}: kein Produkt gefunden. Bitte einmal Name eintragen, beim nächsten Scan ist er für alle gespeichert.`); $("in-name").focus(); }
 }
+function storeItem(input){
+  const {unknown, ...data}=input;
+  const same=D().items.find(i=>i.name===data.name && i.zoneId===data.zoneId && (i.expiry||"")===data.expiry && (i.barcode||"")===data.barcode);
+  let ref;
+  if(same){ write(colC("items").doc(same.id).update({qty:inc(data.qty)})); ref={id:same.id,merged:true,qty:data.qty}; }
+  else { const id=uid(); write(colC("items").doc(id).set({...data,added:isoOf(today()),addedBy:myName()})); ref={id,merged:false,qty:data.qty}; }
+  if(data.barcode && /^[0-9]{6,14}$/.test(data.barcode) && !unknown) write(colC("products").doc(data.barcode).set({name:data.name,category:data.category,zoneId:data.zoneId}));
+  return ref;
+}
 $("inform").addEventListener("submit",e=>{
   e.preventDefault();
-  const zoneId=$("in-zone").value; if(!zoneId) return alertMsg("Bitte zuerst unter Vorrat einen Lagerbereich anlegen.");
+  const zoneId=$("in-zone").value; if(!zoneId) return alertMsg("Bitte zuerst unter Bestand einen Lagerbereich anlegen.");
   const data={ name:$("in-name").value.trim(), category:$("in-cat").value.trim(), zoneId, expiry:$("in-exp").value||"",
                barcode:$("in-code").value.trim(), qty:Math.max(1,parseInt($("in-qty").value)||1) };
   if(!data.name) return;
-  const same=S.items.find(i=>i.name===data.name && i.zoneId===zoneId && (i.expiry||"")===data.expiry && (i.barcode||"")===data.barcode);
-  if(same) write(col("items").doc(same.id).update({qty:inc(data.qty)}));
-  else write(col("items").doc(uid()).set({...data,added:isoOf(today()),addedBy:myName()}));
-  if(data.barcode && /^[0-9]{6,14}$/.test(data.barcode)) write(col("products").doc(data.barcode).set({name:data.name,category:data.category,zoneId}));
+  storeItem(data);
   showMsg($("in-msg"),`${data.name} ×${data.qty} liegt jetzt in ${zoneName(zoneId)}.`);
   const keep=zoneId; e.target.reset(); $("in-zone").value=keep; $("in-qty").value=1;
 });
 $("inform").addEventListener("reset",()=>{ $("in-msg").hidden=true; });
 function outCode(code){
   S.tab="out"; $("out-code").value=code; render();
-  const known=S.products[code]; const hits=S.items.filter(i=>i.barcode===code);
-  showMsg($("out-msg"), hits.length?`Erkannt: ${hits[0].name}`:(known?`${known.name} ist gerade nicht im Vorrat.`:`Barcode ${code} ist nicht im Vorrat.`), !hits.length);
+  const known=D().products[code]; const hits=D().items.filter(i=>i.barcode===code);
+  showMsg($("out-msg"), hits.length?`Erkannt: ${hits[0].name}`:(known?`${known.name} ist gerade nicht im Bestand.`:`Barcode ${code} ist nicht im Bestand.`), !hits.length);
 }
 
-/* ---------- scanner ---------- */
+/* ---------- Piepton ---------- */
+let actx=null;
+const soundOn = () => lsGet("sound")!=="off";
+function audioUnlock(){
+  try{ if(!actx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) actx=new AC(); } if(actx && actx.state==="suspended") actx.resume(); }catch(_){}
+}
+function beep(kind){
+  if(navigator.vibrate) navigator.vibrate(kind==="err"?[80,60,80]:40);
+  if(!soundOn() || !actx) return;
+  const seq={scan:[[2400,0,.11]], ok:[[2000,0,.08],[2700,.1,.12]], err:[[320,0,.25]]}[kind||"scan"];
+  const t0=actx.currentTime+.01;
+  for(const [f,dt,dur] of seq){
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type="square"; o.frequency.value=f;
+    g.gain.setValueAtTime(0,t0+dt); g.gain.linearRampToValueAtTime(.09,t0+dt+.004);
+    g.gain.setValueAtTime(.09,t0+dt+dur-.012); g.gain.linearRampToValueAtTime(0,t0+dt+dur);
+    o.connect(g); g.connect(actx.destination); o.start(t0+dt); o.stop(t0+dt+dur+.02);
+  }
+}
+function renderSoundBtn(){ $("soundbtn").textContent = soundOn() ? "Ton an" : "Ton aus"; }
+$("soundbtn").addEventListener("click",()=>{ lsSet("sound",soundOn()?"off":null); renderSoundBtn(); audioUnlock(); if(soundOn()) beep("scan"); });
+
+/* ---------- MHD-Texterkennung (lädt erst bei Bedarf) ---------- */
+const ocr={state:"idle", worker:null, p:null};
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=()=>rej(new Error("load")); document.head.appendChild(s); }); }
+function ensureOcr(){
+  if(ocr.state==="ready"||ocr.p) return ocr.p;
+  ocr.state="loading"; renderBulk();
+  ocr.p=(async()=>{
+    if(!window.Tesseract) await loadScript(TESS_URL);
+    const w=await Tesseract.createWorker("eng",1);
+    await w.setParameters({tessedit_char_whitelist:"0123456789./-", tessedit_pageseg_mode:"7"});
+    ocr.worker=w; ocr.state="ready";
+  })().catch(()=>{ ocr.state="failed"; ocr.p=null; }).finally(()=>renderBulk());
+  return ocr.p;
+}
+const ocrCanvas=document.createElement("canvas"), octx=ocrCanvas.getContext("2d",{willReadFrequently:true});
+function finderGray(v){
+  const vr=v.getBoundingClientRect(), fr=$("finder").getBoundingClientRect();
+  const iw=v.videoWidth, ih=v.videoHeight, sc=Math.max(vr.width/iw, vr.height/ih);
+  const ox=(vr.width-iw*sc)/2, oy=(vr.height-ih*sc)/2;
+  let sx=(fr.left-vr.left-ox)/sc, sy=(fr.top-vr.top-oy)/sc, sw=fr.width/sc, sh=fr.height/sc;
+  sx=Math.max(0,sx); sy=Math.max(0,sy); sw=Math.min(iw-sx,sw); sh=Math.min(ih-sy,sh);
+  const k=Math.min(1,900/sw), w=Math.max(1,Math.round(sw*k)), h=Math.max(1,Math.round(sh*k));
+  work.width=w; work.height=h; wctx.drawImage(v,sx,sy,sw,sh,0,0,w,h);
+  const d=wctx.getImageData(0,0,w,h).data, g=new Uint8Array(w*h);
+  for(let i=0;i<g.length;i++) g[i]=(d[i*4]*77+d[i*4+1]*150+d[i*4+2]*29)>>8;
+  return {g,w,h};
+}
+async function ocrTick(v){
+  const token=B.token, src=finderGray(v);
+  for(const [width,dil] of [[500,5],[600,5],[700,7]]){
+    if(B.token!==token || B.step!=="date") return;
+    const r=MHD.prepare(src.g,src.w,src.h,{width,dil,k:20}); if(!r) continue;
+    ocrCanvas.width=r.w; ocrCanvas.height=r.h;
+    const img=octx.createImageData(r.w,r.h);
+    for(let i=0;i<r.g.length;i++){ const x=r.g[i]; img.data[i*4]=x; img.data[i*4+1]=x; img.data[i*4+2]=x; img.data[i*4+3]=255; }
+    octx.putImageData(img,0,0);
+    let text=""; try{ text=(await ocr.worker.recognize(ocrCanvas)).data.text; }catch(_){}
+    if(B.token!==token || B.step!=="date") return;
+    const d=MHD.parseDate(text);
+    if(d){
+      B.votes.push(d); if(B.votes.length>8) B.votes.shift();
+      B.cand=d; renderBulk();
+      if(B.votes.filter(x=>x===d).length>=2) return acceptDate(d);
+    }
+  }
+}
+
+/* ---------- Großeinkauf ---------- */
+const B={on:false, step:"code", token:0, code:null, info:undefined, infoP:null, votes:[], cand:null, log:[], count:0, mhd:true, last:{code:null,t:0}};
+function renderBulkZones(){
+  const sel=$("bulkzone"), cur=sel.value;
+  sel.innerHTML=zoneOptions() || `<option value="">Erst unter Bestand einen Bereich anlegen</option>`;
+  const want=cur || lsGet("bulkzone-"+S.dept) || $("in-zone").value;
+  if(want && D().zones.some(z=>z.id===want)) sel.value=want;
+}
+$("bulkzone").addEventListener("change",e=>lsSet("bulkzone-"+S.dept,e.target.value));
+function setStep(step){
+  B.step=step; B.token++; B.votes=[]; B.cand=null;
+  if(step==="code"){ B.code=null; B.info=undefined; B.infoP=null; lastCode=null; }
+  $("finder").classList.toggle("date", step==="date");
+  renderBulk();
+}
+function bulkName(){ return B.info ? B.info.name : null; }
+function renderBulk(){
+  if(!B.on) return;
+  $("bulkcount").textContent = `${B.count} eingelagert`;
+  $("photobtn").hidden = B.step!=="code";
+  $("bulklog").innerHTML = B.log.map((l,i)=>`<div><span>✓ ${esc(l.name)}${l.expiry?` · ${fmtDate(l.expiry)}`:" · ohne MHD"}</span><button class="btn small" type="button" data-undo="${i}">Rückgängig</button></div>`).join("");
+  const box=$("bulkstep");
+  if(B.step==="code"){
+    $("scantext").textContent="Nächsten Barcode in den Rahmen halten";
+    $("scansub").textContent = B.mhd ? "Danach kommt das MHD dran." : "Jeder Scan wird sofort eingelagert.";
+    box.innerHTML=""; return;
+  }
+  const name=bulkName();
+  $("scantext").textContent = B.info===undefined ? "Suche Produkt …" : (name || "Unbekanntes Produkt");
+  $("scansub").textContent = ocr.state==="ready" ? "Jetzt das MHD in den gelben Rahmen halten"
+    : ocr.state==="loading" ? "Datumserkennung lädt … Du kannst das Datum auch tippen."
+    : ocr.state==="failed" ? "Datumserkennung nicht verfügbar. Bitte Datum tippen." : "";
+  if(box.contains(document.activeElement)){ const c=$("bulkcand"); if(c){ c.hidden=!B.cand; c.textContent=B.cand?`${fmtDate(B.cand)} übernehmen`:""; } return; }
+  box.innerHTML = `
+    ${B.info===null ? `<input id="bulkname" placeholder="Name eingeben (sonst „Unbekannt“)" autocomplete="off">` : ""}
+    <button class="btn cand" type="button" id="bulkcand" ${B.cand?"":"hidden"}>${B.cand?esc(fmtDate(B.cand))+" übernehmen":""}</button>
+    <form class="daterow" id="bulkdateform">
+      <input id="bulkdate" inputmode="numeric" placeholder="MHD tippen: TTMMJJ" autocomplete="off" aria-label="MHD tippen">
+      <button class="btn" type="submit">OK</button>
+    </form>
+    <div class="scanbtns">
+      <button class="btn" type="button" id="bulknomhd">Ohne MHD</button>
+      <button class="btn ghost" type="button" id="bulkskip" style="color:#fff">Produkt verwerfen</button>
+    </div>`;
+}
+$("bulkstep").addEventListener("click",e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.id==="bulkcand" && B.cand) acceptDate(B.cand);
+  if(t.id==="bulknomhd") acceptDate("");
+  if(t.id==="bulkskip"){ beep("err"); setStep("code"); }
+});
+$("bulkstep").addEventListener("submit",e=>{
+  if(e.target.id!=="bulkdateform") return; e.preventDefault();
+  const d=MHD.parseTyped($("bulkdate").value);
+  if(d) acceptDate(d); else { beep("err"); $("bulkdate").value=""; $("bulkdate").placeholder="Ungültig, z. B. 150627 oder 0827"; }
+});
+$("bulkstep").addEventListener("input",e=>{
+  if(e.target.id!=="bulkdate") return;
+  const v=e.target.value.replace(/\D/g,"");
+  if(v.length===6||v.length===8){ const d=MHD.parseTyped(e.target.value); if(d){ e.target.blur(); acceptDate(d); } }
+});
+function bulkCode(code){
+  if(code===B.last.code && Date.now()-B.last.t<2500) return;
+  beep("scan"); flashFinder();
+  const infoP=lookup(code);
+  if(!B.mhd){ B.last={code,t:Date.now()}; saveBulk(code, infoP, "", "", false); return; }
+  setStep("date"); B.code=code; B.info=undefined; B.infoP=infoP;
+  infoP.then(info=>{ if(B.code===code && B.step==="date"){ B.info=info; renderBulk(); } });
+  ensureOcr(); renderBulk();
+}
+function acceptDate(expiry){
+  const code=B.code, infoP=B.infoP; if(!code) return;
+  if(!$("bulkzone").value){ beep("err"); $("scansub").textContent="Bitte zuerst unter Bestand einen Lagerbereich anlegen."; return; }
+  const typed=$("bulkname") ? $("bulkname").value.trim() : "";
+  B.last={code,t:Date.now()};
+  setStep("code");
+  saveBulk(code, infoP, expiry, typed, true);
+}
+async function saveBulk(code, infoP, expiry, typed, okBeep){
+  const zoneId=$("bulkzone").value;
+  if(!zoneId){ beep("err"); $("scansub").textContent="Bitte zuerst unter Bestand einen Lagerbereich anlegen."; return; }
+  const info=typed ? null : await Promise.race([infoP, new Promise(r=>setTimeout(()=>r(null),4000))]);
+  const name=typed || (info&&info.name) || `Unbekannt · ${code}`;
+  const ref=storeItem({name, category:(info&&info.category)||"", zoneId, expiry, barcode:code, qty:1, unknown:!typed&&!(info&&info.name)});
+  B.count++; B.log.unshift({name, expiry, ref}); B.log=B.log.slice(0,3);
+  if(okBeep) beep("ok");
+  flashFinder(); renderBulk();
+}
+function undoBulk(i){
+  const l=B.log[i]; if(!l) return;
+  const it=D().items.find(x=>x.id===l.ref.id);
+  if(l.ref.merged && it && (it.qty||1)>1) write(colC("items").doc(l.ref.id).update({qty:inc(-1)}));
+  else write(colC("items").doc(l.ref.id).delete());
+  B.log.splice(i,1); B.count=Math.max(0,B.count-1); beep("err"); renderBulk();
+}
+function flashFinder(){ const f=$("finder"); f.classList.add("flash"); setTimeout(()=>f.classList.remove("flash"),350); }
+
+/* ---------- Scanner ---------- */
 const eanDecode = makeEanDecoder();
-let stream=null, scanTarget="in", scanTimer=null, lastCode=null, detector=null;
+let stream=null, scanMode="in", scanTimer=null, lastCode=null, detector=null;
 const work=document.createElement("canvas"), wctx=work.getContext("2d",{willReadFrequently:true});
 function grayOf(src,sw,sh,max){
   const sc=Math.min(1,max/Math.max(sw,sh)); work.width=Math.round(sw*sc); work.height=Math.round(sh*sc);
@@ -556,17 +887,23 @@ function grayOf(src,sw,sh,max){
   for(let i=0;i<g.length;i++) g[i]=(d[i*4]*77+d[i*4+1]*150+d[i*4+2]*29)>>8;
   return {g,w:work.width,h:work.height};
 }
-async function openScanner(target){
-  scanTarget=target; lastCode=null;
-  $("scanner").hidden=false; $("scantext").textContent="Kamera wird gestartet …";
-  if("BarcodeDetector" in window){ try{ detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]}); }catch(_){ detector=null; } }
+async function openScanner(mode){
+  audioUnlock();
+  scanMode=mode; lastCode=null; renderSoundBtn();
+  B.on = mode==="bulk";
+  $("bulkbox").hidden=!B.on; $("photobtn").hidden=false;
+  $("scanclose").textContent = B.on ? "Fertig" : "Abbrechen";
+  if(B.on){ B.mhd=$("bulkmhd").checked; B.log=[]; B.count=0; B.last={code:null,t:0}; renderBulkZones(); setStep("code"); if(B.mhd) ensureOcr(); }
+  else { $("finder").classList.remove("date"); $("scantext").textContent="Kamera wird gestartet …"; $("scansub").textContent=""; }
+  $("scanner").hidden=false;
+  if("BarcodeDetector" in window && !detector){ try{ detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]}); }catch(_){ detector=null; } }
   try{
     stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080}},audio:false});
     const v=$("video"); v.srcObject=stream; await v.play();
     const track=stream.getVideoTracks()[0]; const caps=track.getCapabilities?track.getCapabilities():{};
     $("torchbtn").hidden=!caps.torch;
     try{ if(caps.focusMode && caps.focusMode.includes("continuous")) await track.applyConstraints({advanced:[{focusMode:"continuous"}]}); }catch(_){}
-    $("scantext").textContent="Barcode in den Rahmen halten";
+    if(!B.on) $("scantext").textContent="Barcode in den Rahmen halten";
     scanLoop();
   }catch(err){
     $("scantext").textContent = location.protocol!=="https:" && location.hostname!=="localhost"
@@ -578,21 +915,38 @@ function closeScanner(){
   clearTimeout(scanTimer); scanTimer=null;
   if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
   $("video").srcObject=null; $("scanner").hidden=true;
+  if(B.on){
+    B.on=false; B.token++;
+    if(B.count){ S.tab="stock"; render(); setSync(`Großeinkauf: ${B.count} ${B.count===1?"Produkt":"Produkte"} eingelagert.`); }
+  }
 }
 function found(code){
-  if(navigator.vibrate) navigator.vibrate([40,40,40]);
+  beep("scan");
   closeScanner();
-  if(scanTarget==="in"){ S.tab="in"; render(); applyCode(code); } else outCode(code);
+  if(scanMode==="in"){ S.tab="in"; render(); applyCode(code); } else outCode(code);
+}
+async function handleCode(code){
+  if(scanMode==="bulk") return bulkCode(code);
+  found(code); return "closed";
 }
 async function scanLoop(){
   const v=$("video"); if(!stream) return;
-  if(v.readyState>=2 && v.videoWidth){
-    let code=null;
-    if(detector){ try{ const r=await detector.detect(v); if(r.length) code=r[0].rawValue; }catch(_){} }
-    if(!code){ const {g,w,h}=grayOf(v,v.videoWidth,v.videoHeight,1000); const r=eanDecode(g,w,h); if(r) code=r.code; }
-    if(code){ if(code===lastCode || detector) return found(code); lastCode=code; }
-  }
-  scanTimer=setTimeout(scanLoop,120);
+  try{
+    if(v.readyState>=2 && v.videoWidth){
+      if(scanMode==="bulk" && B.step==="date"){
+        if(ocr.state==="ready") await ocrTick(v);
+      } else {
+        let code=null;
+        if(detector){ try{ const r=await detector.detect(v); if(r.length) code=r[0].rawValue; }catch(_){} }
+        if(!code){ const {g,w,h}=grayOf(v,v.videoWidth,v.videoHeight,1000); const r=eanDecode(g,w,h); if(r) code=r.code; }
+        if(code){
+          if(code===lastCode || detector){ lastCode=null; if(await handleCode(code)==="closed") return; }
+          else lastCode=code;
+        }
+      }
+    }
+  }catch(_){}
+  if(stream) scanTimer=setTimeout(scanLoop, scanMode==="bulk"&&B.step==="date" ? 60 : 120);
 }
 $("scanclose").addEventListener("click",closeScanner);
 $("torchbtn").addEventListener("click",async()=>{
@@ -605,14 +959,16 @@ $("photofile").addEventListener("change",async e=>{
   const url=URL.createObjectURL(f);
   try{
     const img=await new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url;});
-    for(const max of [1600,2400,1000]){ const {g,w,h}=grayOf(img,img.naturalWidth,img.naturalHeight,max); const r=eanDecode(g,w,h); if(r) return found(r.code); }
-    if(detector){ const r=await detector.detect(img); if(r.length) return found(r[0].rawValue); }
-    $("scantext").textContent="Kein Barcode erkannt. Näher ran, gerade halten, gutes Licht.";
+    let code=null;
+    for(const max of [1600,2400,1000]){ const {g,w,h}=grayOf(img,img.naturalWidth,img.naturalHeight,max); const r=eanDecode(g,w,h); if(r){ code=r.code; break; } }
+    if(!code && detector){ try{ const r=await detector.detect(img); if(r.length) code=r[0].rawValue; }catch(_){} }
+    if(code) return handleCode(code);
+    beep("err"); $("scantext").textContent="Kein Barcode erkannt. Näher ran, gerade halten, gutes Licht.";
   }catch(_){ $("scantext").textContent="Foto konnte nicht gelesen werden."; }
   finally{ URL.revokeObjectURL(url); }
 });
 
-/* ---------- reminders ---------- */
+/* ---------- Erinnerungen ---------- */
 function downloadFile(name,text,type){
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name;
   document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000);
@@ -631,31 +987,39 @@ function downloadIcs(it){
 }
 async function notifyIfNeeded(force){
   if(!S.ready || !("Notification" in window) || Notification.permission!=="granted") return;
-  const a=alertsList(); if(!a.length) return;
+  const a=[...alertsOf("vorrat"),...alertsOf("werkstatt")].sort((x,y)=>x.s.n-y.s.n); if(!a.length) return;
   const day=isoOf(today()); if(!force && lsGet("notified")===day) return;
   const bad=a.filter(x=>x.s.cls==="bad").length;
-  const body=a.slice(0,4).map(x=>`${x.i.name}: ${x.s.txt}`).join("\n")+(a.length>4?`\n… und ${a.length-4} weitere`:"");
+  const body=a.slice(0,4).map(x=>`${x.dept==="werkstatt"?"Werkstatt: ":""}${x.i.name}: ${x.s.txt}`).join("\n")+(a.length>4?`\n… und ${a.length-4} weitere`:"");
   const title=bad?`${bad} Produkt${bad>1?"e":""} abgelaufen oder kurz davor`:`${a.length} Produkt${a.length>1?"e":""} laufen bald ab`;
   try{ const reg=await navigator.serviceWorker.ready; await reg.showNotification(title,{body,icon:"icon-192.png",tag:"mhd"}); }
   catch(_){ try{ new Notification(title,{body}); }catch(__){} }
   lsSet("notified",day);
 }
 
-/* ---------- backup ---------- */
-$("exportbtn").addEventListener("click",()=>downloadFile(`vorrat-sicherung-${isoOf(today())}.json`,JSON.stringify({zones:S.zones,items:S.items,products:S.products},null,1),"application/json"));
+/* ---------- Sicherung ---------- */
+$("exportbtn").addEventListener("click",()=>{
+  const pack=k=>({zones:S.d[k].zones,items:S.d[k].items,products:S.d[k].products});
+  downloadFile(`vorrat-sicherung-${isoOf(today())}.json`,JSON.stringify({version:2,...pack("vorrat"),werkstatt:pack("werkstatt")},null,1),"application/json");
+});
 $("importfile").addEventListener("change",async e=>{
   const f=e.target.files[0]; e.target.value=""; if(!f) return;
   try{
     const d=JSON.parse(await f.text()); if(!Array.isArray(d.items)||!Array.isArray(d.zones)) throw 0;
-    const writes=[...d.zones.map(z=>["zones",z]),...d.items.map(i=>["items",i]),...Object.entries(d.products||{}).map(([id,p])=>["products",{id,...p}])];
-    for(let k=0;k<writes.length;k+=400){ const b=fs.batch(); writes.slice(k,k+400).forEach(([c,{id,...rest}])=>b.set(col(c).doc(String(id)),rest)); await b.commit(); }
-    setSync(`${d.items.length} Produkte aus der Sicherung übernommen.`);
-  }catch(_){ setSync("Diese Datei ist keine gültige Vorrats-Sicherung.",true); }
+    const writes=[]; let n=0;
+    const add=(dept,p)=>{ if(!p||!Array.isArray(p.items)) return; n+=p.items.length;
+      (p.zones||[]).forEach(z=>writes.push([dept,"zones",z])); p.items.forEach(i=>writes.push([dept,"items",i]));
+      Object.entries(p.products||{}).forEach(([id,x])=>writes.push([dept,"products",{id,...x}])); };
+    add("vorrat",d); add("werkstatt",d.werkstatt);
+    for(let k=0;k<writes.length;k+=400){ const b=fs.batch(); writes.slice(k,k+400).forEach(([dept,c,{id,...rest}])=>b.set(colOf(dept,c).doc(String(id)),rest)); await b.commit(); }
+    setSync(`${n} Produkte aus der Sicherung übernommen.`);
+  }catch(_){ setSync("Diese Datei ist keine gültige Vorrats-Sicherung oder das Einspielen ist fehlgeschlagen.",true); }
 });
 
-/* ---------- boot ---------- */
+/* ---------- Start ---------- */
 (async()=>{
   if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+  const savedDept=lsGet("dept"); if(DEPTS[savedDept]) S.dept=savedDept;
   const urlHid=new URLSearchParams(location.search).get("h");
   if(urlHid){ history.replaceState(null,"",location.pathname); }
   try{ await initFirebase(); }
@@ -663,7 +1027,7 @@ $("importfile").addEventListener("change",async e=>{
   const hid = (urlHid && /^[a-z0-9]{20,}$/i.test(urlHid)) ? urlHid : lsGet("hid");
   if(hid){
     enterHousehold(hid);
-    fs.collection("households").doc(hid).get().then(d=>{ if(!d.exists && !d.metadata.fromCache) setSync("Diesen Haushalt gibt es nicht. Bitte den Einladungslink prüfen oder unter Vorrat → Haushalt verlassen.",true); }).catch(()=>{});
+    fs.collection("households").doc(hid).get().then(d=>{ if(!d.exists && !d.metadata.fromCache) setSync("Diesen Haushalt gibt es nicht. Bitte den Einladungslink prüfen oder unter Bestand den Haushalt verlassen.",true); }).catch(()=>{});
     if(urlHid && !myName()){ S.tab="stock"; render(); setTimeout(()=>$("myname").focus(),300); setSync("Willkommen im Haushalt! Trag unten noch deinen Namen ein."); }
   } else renderSetup("start");
   setTimeout(()=>notifyIfNeeded(false),2500);
